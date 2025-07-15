@@ -1,103 +1,172 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { generateNickname } from "../../utils/nickname";
+import {
+  joinMatchmaking,
+  quitMatchmaking,
+  JoinResponse,
+} from "@/lib/matchmaking";
+import { MatchmakingDialog } from "@/components/MatchmakingDialog";
+import { useMatchmakingStream } from "@/hooks/useMatchmakingStream";
+
+/**
+ * Front page odpowiada za:
+ * 1. Zgłoszenie się do matchmakingu (`/game/join`).
+ * 2. Nasłuch Server‑Sent Events na `/game/matchmaking`.
+ * 3. Zarządzanie dialogiem postępu.
+ */
+export default function HomePage() {
+  const router = useRouter();
+
+  // ► Nickname & placeholder
+  const [nick, setNick] = useState("");
+  const [placeholder, setPlaceholder] = useState("");
+
+  useEffect(() => {
+    setPlaceholder(generateNickname());
+  }, []);
+
+  // ► Matchmaking state
+  const [matchId, setMatchId] = useState<string | null>(null);
+  const [participantId, setParticipantId] = useState<string | null>(null);
+  const [current, setCurrent] = useState(0);
+  const [max, setMax] = useState(0);
+  const [status, setStatus] = useState<"idle" | "waiting" | "starting" | "failed">(
+    "idle",
+  );
+  const [failedReason, setFailedReason] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
+
+  /* -------------------------------------------------
+   * Server‑Sent Events
+   * ------------------------------------------------- */
+  useMatchmakingStream(matchId, (ev) => {
+    switch (ev.type) {
+      case "updated": {
+        setCurrent(ev.current);
+        setMax(ev.max);
+        setStatus("waiting");
+        break;
+      }
+      case "ended": {
+        // Zawody gotowe do startu – wejście w "Rozpoczynanie".
+        setStatus("starting");
+        setCurrent(ev.players);
+        // Zamykamy dialog po 2 s, potem przenosimy do draftu.
+        setTimeout(() => {
+          setMatchId(null); // zamyka dialog
+          router.push(`/draft?match=${matchId}`);
+        }, 2000);
+        break;
+      }
+      case "failed": {
+        setStatus("failed");
+        setFailedReason(ev.reason);
+        setCurrent(ev.current);
+        setMax(ev.max);
+        break;
+      }
+    }
+  });
+
+  /* -------------------------------------------------
+   * Akcje użytkownika
+   * ------------------------------------------------- */
+  // ► „Zagraj”
+  const submit = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+
+    try {
+      const chosenNick = (nick.trim() || placeholder).slice(0, 24);
+      const info: JoinResponse = await joinMatchmaking(chosenNick);
+
+      setMatchId(info.gameId);
+      setParticipantId(info.participantId);
+      setCurrent(info.currentPlayers);
+      setMax(info.maxPlayers);
+      setStatus("waiting");
+    } catch (err) {
+      console.error(err);
+      alert("Nie udało się dołączyć do matchmakingu.");
+    } finally {
+      setBusy(false);
+    }
+  }, [nick, placeholder, busy]);
+
+  // ► „Przerwij” / zamknij dialog
+  const abort = useCallback(async () => {
+    if (matchId && participantId) {
+      try {
+        await quitMatchmaking(matchId, participantId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    reset();
+  }, [matchId, participantId]);
+
+  const reset = () => {
+    setMatchId(null);
+    setParticipantId(null);
+    setCurrent(0);
+    setMax(0);
+    setStatus("idle");
+    setFailedReason(undefined);
+    setBusy(false);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="relative flex h-screen w-screen items-center justify-center overflow-hidden font-sans">
+      {/* Tło */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-80 dark:opacity-40"
+        style={{ backgroundImage: "url('/assets/predazzo_4k.jpeg')" }}
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* Glassmorphic card */}
+      <div className="flex flex-col items-center space-y-8 rounded-3xl border border-white/20 bg-white/10 p-10 shadow-xl backdrop-blur-lg dark:border-white/10 dark:bg-black/0">
+        <h1 className="font-heading text-5xl font-bold tracking-tight text-white drop-shadow-md">
+          SJ Draft
+        </h1>
+
+        <p className="max-w-md text-center text-white/80 drop-shadow-sm">
+          Prezentujemy darmową grę, w której kompletujesz swój zespół skoczków
+          narciarskich. Obserwuj skoki zawodników i popisz się intuicją – kto jest
+          dziś w dobrej formie?
+        </p>
+
+        <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+          <Input
+            placeholder={placeholder}
+            value={nick}
+            onChange={(e) => setNick(e.target.value)}
+            className="w-64 text-center"
+            disabled={busy || status !== "idle"}
+          />
+          <Button
+            size="lg"
+            onClick={submit}
+            className="font-heading"
+            disabled={busy || status !== "idle"}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {busy ? "Łączenie…" : "Zagraj"}
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <MatchmakingDialog
+          open={!!matchId}
+          current={current}
+          max={max}
+          status={status === "starting" ? "starting" : status === "failed" ? "failed" : "waiting"}
+          reason={failedReason}
+          onCancel={abort}
+        />
+      </div>
+    </main>
   );
 }
