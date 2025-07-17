@@ -29,7 +29,7 @@ export function useMatchmakingStream(
 
         let cancelled = false;
         const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5043';
-        const es = new EventSource(`${base}/game/matchmaking?gameId=${gameId}`);
+        const es = new EventSource(`${base}/game/matchmakingHub?matchmakingId=${gameId}`);
 
         const parse = (e: MessageEvent<any>) => JSON.parse(e.data ?? '{}');
 

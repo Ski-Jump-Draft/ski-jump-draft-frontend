@@ -59,7 +59,7 @@ export function MatchmakingDialog({
 
 
     return (
-        <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
+        <Dialog open={open} onOpenChange={(o) => o || onCancel()}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="font-display text-center">
