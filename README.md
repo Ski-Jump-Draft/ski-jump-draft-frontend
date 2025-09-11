@@ -1,7 +1,7 @@
 # Ski Jump Draft — Frontend
 
 🎮 **Play now:** https://skijumpdraft.com  
-🔗 **Backend repo:** https://github.com/sj-draft/backend
+🔗 **Backend repo:** https://github.com/ski-jump-draft/backend
 
 ## Overview
 This is the **React/TypeScript frontend** for Ski Jump Draft, an online draft game about ski jumping.  
