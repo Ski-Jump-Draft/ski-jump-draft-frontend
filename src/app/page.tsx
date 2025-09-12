@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { generateNickname } from "@/utils/nickname";
-import { joinMatchmaking, quitMatchmaking, JoinResponse } from "@/lib/matchmaking";
+import { joinMatchmaking, leaveMatchmaking, JoinResponse, getMatchmaking } from "@/lib/matchmaking";
 import { MatchmakingDialog } from "@/components/MatchmakingDialog";
-import { useMatchmakingStream } from "@/hooks/api_streams/useMatchmakingStream";
+import { useMatchmakingState } from "@/hooks/api_streams/useMatchmakingState";
 import { TransitionScreen } from "@/components/TransitionScreen";
 import { GameHillInfoScreen } from "@/components/GameHillInfoScreen";
 import {
@@ -28,8 +28,8 @@ export default function HomePage() {
   useEffect(() => setPlaceholder(generateNickname()), []);
 
   /* matchmaking */
-  const [matchId, setMatchId] = useState<string | null>(null);
-  const [participantId, setParticipantId] = useState<string | null>(null);
+  const [matchId, setMatchmakingId] = useState<string | null>(null);
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [max, setMax] = useState(0);
   const [status, setStatus] = useState<"idle" | "waiting" | "starting" | "failed">("idle");
@@ -51,38 +51,25 @@ export default function HomePage() {
   /* ekrany */
   const [screen, setScreen] = useState<"none" | "transition1" | "hill" | "transition2">("none");
 
-  /* ── 1. matchmakingHub ── */
-  useMatchmakingStream(matchId, ev => {
-    switch (ev.type) {
-      case "updated":
-        setCurrent(ev.current);
-        setMax(ev.max);
-        setStatus("waiting");
-        break;
+  useMatchmakingState(matchId, s => {
+    setCurrent(s.playersCount);
+    setMax(s.maxPlayers ?? 0);
 
-      case "ended": {
-        setStatus("starting");
-        setCurrent(ev.players);
-        setEndedAt(Date.now());
-
-        /* otwieramy gameHub raz, tuż po ended */
-        setGameHubId(matchId);
-
-        /* zamykamy dialog + przejście po ≥2 s  */
-        const t = setTimeout(() => {
-          setDialogOpen(false);
-          setScreen("transition1");
-          setMatchId(null);          // 👉 wycina auto-reconnect matchmakingu
-        }, 2000);
-        return () => clearTimeout(t);
-      }
-
-      case "failed":
-        setStatus("failed");
-        setReason(ev.reason);
-        setCurrent(ev.current);
-        setMax(ev.max);
-        break;
+    if (s.status === "Running") {
+      setStatus("waiting");
+    } else if (s.status === "Ended") {
+      setStatus("starting");
+      setEndedAt(Date.now());
+      setGameHubId(matchId);
+      const t = setTimeout(() => {
+        setDialogOpen(false);
+        setScreen("transition1");
+        setMatchmakingId(null);
+      }, 2000);
+      return () => clearTimeout(t);
+    } else if (s.status === "Failed") {
+      setStatus("failed");
+      setReason(s.failReason ?? undefined);
     }
   });
 
@@ -131,12 +118,16 @@ export default function HomePage() {
     try {
       const nickSend = (nick.trim() || placeholder).slice(0, 24);
       const info: JoinResponse = await joinMatchmaking(nickSend);
-      setMatchId(info.gameId);
-      setParticipantId(info.participantId);
-      setCurrent(info.currentPlayers);
-      setMax(info.maxPlayers);
-      setStatus("waiting");
+      console.log(info.matchmakingId);
+      setMatchmakingId(info.matchmakingId);
+      setPlayerId(info.playerId);
+
+      const snapshot = await getMatchmaking(info.matchmakingId);
+      setCurrent(snapshot.playersCount);
+      setMax(snapshot.maxPlayers);
+      setStatus(snapshot.status === "Running" ? "waiting" : snapshot.status.toLowerCase() as any);
       setDialogOpen(true);
+
     } catch {
       alert("Nie udało się dołączyć do matchmakingu.");
     } finally {
@@ -146,14 +137,14 @@ export default function HomePage() {
 
   /* ── 5. PRZERWIJ ── */
   const abort = useCallback(async () => {
-    if (matchId && participantId) {
-      try { await quitMatchmaking(matchId, participantId); } catch { }
+    if (matchId && playerId) {
+      try { await leaveMatchmaking(matchId, playerId); } catch { }
     }
     hardReset();
-  }, [matchId, participantId]);
+  }, [matchId, playerId]);
 
   const hardReset = () => {
-    setMatchId(null); setParticipantId(null); setGameHubId(null);
+    setMatchmakingId(null); setPlayerId(null); setGameHubId(null);
     setCurrent(0); setMax(0);
     setStatus("idle"); setReason(undefined);
     setDialogOpen(false); setBusy(false);
@@ -166,15 +157,15 @@ export default function HomePage() {
   return (
     <main className="relative flex h-screen w-screen items-center justify-center overflow-hidden font-sans">
       {/* bg */}
-      <div className="absolute inset-0 -z-10 bg-cover bg-center opacity-80"
+      <div className="absolute inset-0 -z-10 bg-cover bg-center opacity-100 dark:opacity-30"
         style={{ backgroundImage: "url('/assets/predazzo_4k.jpeg')" }} />
 
       {/* karta startowa */}
       <div className="flex flex-col items-center gap-8 rounded-3xl border border-white/20
-                      bg-white/10 p-10 shadow-xl backdrop-blur-lg">
+                      bg-gray-800/100 dark:bg-stone-900/100 p-10 shadow-xl backdrop-blur-md">
         <h1 className="font-heading text-5xl font-bold text-white">SJ Draft</h1>
         <p className="text-center text-white/80 max-w-md">
-          Obserwuj skoki zawodników, a następnie skompletuj najlepszy skład ze wszystkich! Rozgrywka trwa około 15 minut.
+          Obserwuj skoki zawodników i skompletuj najlepszy skład ze wszystkich! Rozgrywka trwa około 15 minut.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4">

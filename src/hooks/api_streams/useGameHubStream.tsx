@@ -49,8 +49,8 @@ export function useGameHubStream(
         if (!gameId) return;
 
         const base =
-            process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5043';
-        const es = new EventSource(`${base}/game/gameHub?gameId=${gameId}`);
+            process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
+        const es = new EventSource(`${base}/game/stream?gameId=${gameId}`);
 
         const parse = (e: MessageEvent<any>) => JSON.parse(e.data ?? '{}');
 
