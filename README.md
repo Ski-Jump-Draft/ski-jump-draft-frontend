@@ -16,3 +16,6 @@ Built with **Vite** + **shadcn/ui** + **Tailwind**.
 - ⚛️ React + TypeScript
 - ⚡ Vite
 - 🎨 Tailwind CSS + [shadcn/ui](https://ui.shadcn.com) + [lucide-react](https://lucide.dev)
+
+## Configuration
+Copy `.env.example` to `.env.local` and adjust values if needed.
