@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SJ Draft",
+  title: "Ski Jump Draft",
   description: "Test fontów",
 };
 

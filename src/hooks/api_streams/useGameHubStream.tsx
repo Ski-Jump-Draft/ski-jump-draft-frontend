@@ -1,43 +1,33 @@
 import { useEffect, useRef } from 'react';
+import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { GameUpdatedDto } from '@/types/game';
 
-export interface GameCreatedEvent {
-    type: 'gameCreated';
+export interface GameUpdatedEvent {
+    type: 'gameUpdated';
+    data: GameUpdatedDto;
+}
+
+export interface GameEndedEvent {
+    type: 'gameEnded';
     gameId: string;
-    eventTimestampUtc: string;
-    scheduledNextPhaseAtUtc: string;
-    serverTimeUtc?: string;
 }
 
-export interface HillChoiceStartedEvent {
-    type: 'hillChoiceStarted';
-    hill: {
-        id: string;
-        location: string;
-        k: number;
-        hs: number;
-        countryCode: string;
-    };
-    eventTimestampUtc: string;
-    scheduledNextPhaseAtUtc: string;
-}
-export interface HillChoiceEndedEvent {
-    type: 'hillChoiceEnded';
-    eventTimestampUtc: string;
-    scheduledNextPhaseAtUtc: string;
-}
-export interface PreDraftStartedEvent {
-    type: 'preDraftStarted';
+export interface GameStartedAfterMatchmakingEvent {
+    type: 'gameStartedAfterMatchmaking';
+    matchmakingId: string;
+    gameId: string;
+    playersMapping: Record<string, string>;
 }
 
 export type GameHubEvent =
-    | GameCreatedEvent
-    | HillChoiceStartedEvent
-    | HillChoiceEndedEvent
-    | PreDraftStartedEvent;
+    | GameUpdatedEvent
+    | GameEndedEvent
+    | GameStartedAfterMatchmakingEvent;
 
 export function useGameHubStream(
     gameId: string | null,
     onEvent: (ev: GameHubEvent) => void,
+    matchmakingId?: string | null,
 ): void {
     // trzyma stale aktualną referencję do onEvent (nie wywoła useEffect przy każdej zmianie funkcji!)
     const onEventRef = useRef(onEvent);
@@ -46,28 +36,76 @@ export function useGameHubStream(
     }, [onEvent]);
 
     useEffect(() => {
-        if (!gameId) return;
+        if (!gameId && !matchmakingId) {
+            return;
+        }
 
-        const base =
-            process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
-        const es = new EventSource(`${base}/game/stream?gameId=${gameId}`);
+        const targetId = gameId || matchmakingId;
+        const isMatchmaking = !gameId && matchmakingId;
 
-        const parse = (e: MessageEvent<any>) => JSON.parse(e.data ?? '{}');
+        // Starting SignalR connection
 
-        const wrap = <T extends GameHubEvent['type']>(type: T) =>
-            (e: MessageEvent) => {
-                const d = parse(e);
-                onEventRef.current({ type, ...d } as GameHubEvent);
-            };
+        const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5150';
+        const connection = new HubConnectionBuilder()
+            .withUrl(`${base}/game/hub`)
+            .withAutomaticReconnect()
+            .build();
 
-        es.addEventListener('gameCreated', wrap('gameCreated'));
-        es.addEventListener('hillChoiceStarted', wrap('hillChoiceStarted'));
-        es.addEventListener('hillChoiceEnded', wrap('hillChoiceEnded'));
-        es.addEventListener('preDraftStarted', wrap('preDraftStarted'));
+        const startConnection = async () => {
+            try {
+                await connection.start();
+
+                if (isMatchmaking) {
+                    // Join the matchmaking group
+                    await connection.invoke('JoinMatchmaking', matchmakingId);
+                } else {
+                    // Join the game group
+                    await connection.invoke('JoinGame', gameId);
+                }
+
+                // Set up event handlers
+                connection.on('GameUpdated', (data: GameUpdatedDto) => {
+                    onEventRef.current({
+                        type: 'gameUpdated',
+                        data
+                    });
+                });
+
+                connection.on('GameEnded', (gameId: string) => {
+                    onEventRef.current({
+                        type: 'gameEnded',
+                        gameId
+                    });
+                });
+
+                // Only listen for GameStartedAfterMatchmaking when in matchmaking mode
+                if (isMatchmaking) {
+                    connection.on('GameStartedAfterMatchmaking', async (data: any) => {
+                        // Immediately switch to game group to catch GameUpdated events
+                        try {
+                            await connection.invoke('JoinGame', data.gameId);
+                        } catch (err) {
+                            console.error('Failed to switch to game group:', err);
+                        }
+
+                        onEventRef.current({
+                            type: 'gameStartedAfterMatchmaking',
+                            matchmakingId: data.matchmakingId,
+                            gameId: data.gameId,
+                            playersMapping: data.playersMapping
+                        });
+                    });
+                }
+
+            } catch (err) {
+                console.error('SignalR connection error:', err);
+            }
+        };
+
+        startConnection();
 
         return () => {
-            es.close();
+            connection.stop();
         };
-    }, [gameId]); // <- tylko gameId!
-
+    }, [gameId, matchmakingId]); // <- gameId i matchmakingId
 }

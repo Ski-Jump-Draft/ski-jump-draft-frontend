@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 
-export type MatchmakingStatus = 'Running' | 'Ended' | 'Failed';
+export type MatchmakingStatus = 'Running' | 'Ended Succeeded' | 'Ended NotEnoughPlayers' | 'Failed';
 export interface MatchmakingState {
     status: MatchmakingStatus;
     failReason?: string | null;
     playersCount: number;
     minRequiredPlayers?: number | null;
-    minPlayers?: number | null;
-    maxPlayers?: number | null;
-    remainingTime?: string | number | null; // TimeSpan przyjdzie jako string
+    minPlayers: number;
+    maxPlayers: number;
+    remainingTime?: string | number | null;
 }
 
 export function useMatchmakingState(
@@ -17,21 +17,20 @@ export function useMatchmakingState(
 ) {
     useEffect(() => {
         if (!matchId) return;
-        const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+        const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5150').replace(/\/$/, '');
         const es = new EventSource(`${base}/matchmaking/${matchId}/stream`);
-
 
         const handle = (e: MessageEvent) => {
             const d = JSON.parse(e.data ?? '{}');
-            console.log("payload:", d);
+            console.log("matchmaking payload:", d);
 
             onState({
                 status: d.Status,
                 failReason: d.FailReason ?? null,
                 playersCount: d.PlayersCount ?? 0,
                 minRequiredPlayers: d.MinRequiredPlayers ?? null,
-                minPlayers: d.MinPlayers ?? null,
-                maxPlayers: d.MaxPlayers ?? null,
+                minPlayers: d.MinPlayers ?? 0,
+                maxPlayers: d.MaxPlayers ?? 0,
                 remainingTime: d.RemainingTime ?? null,
             });
         };
@@ -41,6 +40,9 @@ export function useMatchmakingState(
         // …i/lub domyślny:
         es.onmessage = handle;
 
-        return () => { es.removeEventListener('matchmaking-updated', handle); es.close(); };
+        return () => {
+            es.removeEventListener('matchmaking-updated', handle);
+            es.close();
+        };
     }, [matchId, onState]);
 }

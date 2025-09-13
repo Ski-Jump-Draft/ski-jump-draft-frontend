@@ -1,7 +1,9 @@
 'use client';
 import { Countdown } from '@/components/ui/Countdown';
+import { PhaseTimer } from '@/components/ui/PhaseTimer';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NextStatusDto } from '@/types/game';
 
 interface PhaseInfo {
     title: string;
@@ -12,11 +14,14 @@ interface TransitionProps {
     phases: PhaseInfo[];
     currentIndex: number;
     targetUtc: string | null;
+    nextStatus?: NextStatusDto | null;
 }
 
 
 
-export function TransitionScreen({ phases, currentIndex, targetUtc, visible }: TransitionProps & { visible: boolean }) {
+export function TransitionScreen({ phases, currentIndex, targetUtc, nextStatus, visible }: TransitionProps & { visible: boolean }) {
+    // TransitionScreen render
+
     return (
         <AnimatePresence>
             {visible && (
@@ -57,9 +62,16 @@ export function TransitionScreen({ phases, currentIndex, targetUtc, visible }: T
                                 ))}
                             </div>
 
-                            {/* licznik */}
+                            {/* timer */}
                             <div className="flex items-center justify-center">
-                                <Countdown targetUtc={targetUtc} />
+                                {nextStatus ? (
+                                    <PhaseTimer
+                                        timeSpan={nextStatus.in}
+                                        nextPhase={nextStatus.status}
+                                    />
+                                ) : (
+                                    <Countdown targetUtc={targetUtc} />
+                                )}
                             </div>
                         </div>
                     </div>
