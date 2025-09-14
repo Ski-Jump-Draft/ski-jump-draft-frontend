@@ -15,6 +15,7 @@ export interface GameUpdatedDto {
     break: BreakDto | null;
     ended: EndedDto | null;
     lastCompetitionState: CompetitionDto | null;
+    lastCompetitionResultDto?: CompetitionRoundResultDto | null;
 }
 
 export interface NextStatusDto {
@@ -27,8 +28,9 @@ export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "B
 // ───────── Header (stabilne słowniki referencyjne) ─────────
 export interface GameHeaderDto {
     hillId: string | null;
-    players: PlayerDto[];
+    players: GamePlayerDto[];
     jumpers: JumperDto[];
+    competitionJumpers: CompetitionJumperDto[];
 }
 
 export interface PlayerDto {
@@ -36,20 +38,23 @@ export interface PlayerDto {
     nick: string;
 }
 
-export interface JumperDto {
-    jumperId: string;
+export interface GamePlayerDto {
+    playerId: string;
+    nick: string;
+    isBot: boolean;
 }
 
-// ───────── PreDraft ─────────
-export interface PreDraftDto {
-    mode: "Running" | "Break";
-    index: number; // 0-based index aktualnego/polskiego konkursu pre-draft
-    competition: CompetitionDto | null; // null, jeśli Break
+export interface JumperDto {
+    gameJumperId: string;
+    gameWorldJumperId: string;
+    name: string;
+    surname: string;
+    countryFisCode: string;
+    bib?: number;
 }
 
 // ───────── Draft ─────────
 export interface DraftDto {
-    currentPlayerId: string | null;
     timeoutInSeconds: number | null;
     ended: boolean;
     orderPolicy: "Classic" | "Snake" | "Random";
@@ -74,31 +79,45 @@ export interface PlayerPicksDto {
 // ───────── Competition (lekki widok) ─────────
 export interface CompetitionDto {
     status: CompetitionStatus; // "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended"
-    nextJumperId: string | null;
+    startlist: StartlistJumperDto[];
     gate: GateDto;
     results: CompetitionResultDto[];
+    nextJumpInSeconds?: number | null;
+    nextJumperId?: string | null; // Helper property from backend
 }
 
 export type CompetitionStatus = "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended";
 
+export interface StartlistJumperDto {
+    bib: number;
+    done: boolean;
+    competitionJumperId: string;
+}
+
 export interface CompetitionResultDto {
     rank: number;
     bib: number;
-    jumper: CompetitionJumperDto;
+    competitionJumperId: string;
     total: number;
     rounds: CompetitionRoundResultDto[];
 }
 
 export interface CompetitionRoundResultDto {
+    gameJumperId: string; // NEW: Game jumper ID
+    competitionJumperId: string; // NEW: Competition jumper ID
     distance: number;
     points: number;
-    judgePoints: number | null;
-    windPoints: number | null;
-    windAverage: number | null;
+    judges?: number[] | null;
+    judgePoints?: number | null;
+    windCompensation?: number | null;
+    windAverage: number;
+    gateCompensation?: number | null;
+    totalCompensation: number;
 }
 
 export interface CompetitionJumperDto {
-    id: string;
+    gameJumperId: string;
+    competitionJumperId: string;
     name: string;
     surname: string;
     countryFisCode: string;
@@ -110,21 +129,51 @@ export interface GateDto {
     coachReduction: number | null;
 }
 
-// ───────── Break / Ended ─────────
+// ───────── PreDraft ─────────
+export interface PreDraftDto {
+    mode: "Waiting" | "Running";
+    index: number; // 0-based session index
+    competition: CompetitionDto | null;
+}
+
+export interface StartlistEntryDto {
+    bib: number;
+    jumperId: string;
+    name: string;
+    surname: string;
+    countryFisCode: string;
+}
+
+export interface PlayerWithBotFlagDto extends PlayerDto {
+    isBot: boolean;
+}
+
+export interface JumperDetailsDto extends CompetitionJumperDto {
+    photoUrl?: string;
+    lastJumpResult?: CompetitionRoundResultDto;
+    currentPosition?: number;
+    gatePoints?: number;
+    windPoints?: number;
+    totalCompensation?: number;
+    totalScore?: number;
+}
+
+export interface PreDraftSessionDto {
+    sessionNumber: number;
+    results: CompetitionResultDto[];
+    isActive: boolean;
+    nextJumpInSeconds?: number;
+}
+
+// ───────── Break ─────────
 export interface BreakDto {
-    next: "PreDraft" | "Draft" | "MainCompetition" | "Ended";
+    type: string;
+    durationInSeconds: number;
+    remainingInSeconds: number;
 }
 
+// ───────── Ended ─────────
 export interface EndedDto {
-    policy: "Classic" | "PodiumAtAllCosts";
-    ranking: Record<string, [number, number]>; // position, points
-}
-
-// ───────── Legacy Hill interface (for backward compatibility) ─────────
-export interface Hill {
-    id: string;
-    location: string;
-    k: number;
-    hs: number;
-    countryCode: string;
+    finalResults: CompetitionResultDto[];
+    winner: CompetitionJumperDto;
 }

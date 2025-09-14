@@ -57,8 +57,13 @@ export function MatchmakingDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={(o) => o || onCancel()}>
-            <DialogContent className="sm:max-w-md">
+        <Dialog open={open}>
+            <DialogContent
+                className="sm:max-w-md"
+                onEscapeKeyDown={(e) => e.preventDefault()}
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle className="font-display text-center">
                         {title}

@@ -179,3 +179,87 @@ button {
 .animate-spin-slow {
   animation: spin-slow 2s linear infinite;
 }
+
+/* ───────────────── Card reveal shader effect ───────────────── */
+@keyframes card-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    filter: blur(6px) saturate(0.9);
+  }
+
+  60% {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shader-sweep {
+  0% {
+    transform: translateX(-60%) rotate(0deg);
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: translateX(60%) rotate(10deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shader-sweep-top {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: translateY(60%);
+    opacity: 0;
+  }
+}
+
+.animate-card-reveal {
+  animation: card-reveal 1s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+.reveal-shader {
+  position: relative;
+  overflow: hidden;
+}
+
+.reveal-shader::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(from 180deg at 50% 50%, rgba(59, 130, 246, 0.28), rgba(236, 72, 153, 0.22), rgba(59, 130, 246, 0.28));
+  mix-blend-mode: overlay;
+  filter: blur(28px) saturate(1.15);
+  pointer-events: none;
+  opacity: 0;
+  animation: shader-sweep 1s ease-out forwards;
+}
+
+.reveal-shader-top {
+  position: relative;
+  overflow: hidden;
+}
+
+.reveal-shader-top::after {
+  content: "";
+  position: absolute;
+  inset: -30% -15% -30% -15%;
+  background: linear-gradient(to bottom,
+      rgba(59, 130, 246, 0.30),
+      rgba(236, 72, 153, 0.18),
+      rgba(59, 130, 246, 0.30));
+  mix-blend-mode: overlay;
+  filter: blur(24px) saturate(1.1);
+  pointer-events: none;
+  opacity: 0;
+  animation: shader-sweep-top 1s ease-out forwards;
+}

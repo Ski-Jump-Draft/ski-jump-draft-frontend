@@ -9,6 +9,9 @@ import { MatchmakingDialog } from "@/components/MatchmakingDialog";
 import { useMatchmakingState } from "@/hooks/api_streams/useMatchmakingState";
 import { TransitionScreen } from "@/components/TransitionScreen";
 import { GameHillInfoScreen } from "@/components/GameHillInfoScreen";
+import { PreDraftDemo } from "@/components/PreDraftDemo";
+import { PreDraftScreen } from "@/components/PreDraftScreen";
+import { mapGameDataToPreDraftProps } from "@/lib/gameMapper";
 import {
   GameUpdatedEvent,
   GameEndedEvent,
@@ -226,6 +229,17 @@ export default function HomePage() {
           </Button>
         </div>
 
+        {/* Demo button */}
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            onClick={() => setScreen("predraft")}
+            className="text-white border-white/30 hover:bg-white/10"
+          >
+            Demo: PreDraft Screen
+          </Button>
+        </div>
+
         {/* Error display */}
         {joinError && (
           <div className="mt-4 p-4 rounded-lg border border-red-500/50 bg-red-500/10 backdrop-blur-sm">
@@ -282,16 +296,27 @@ export default function HomePage() {
       />
 
       {/* Game screens based on status */}
-      {screen === "predraft" && gameData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
-          <div className="text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">PreDraft Phase</h2>
-            <p>Competition {(gameData.preDraft?.index ?? 0) + 1} of {gameData.preDraftsCount}</p>
-            {gameData.preDraft?.competition && (
-              <p>Status: {gameData.preDraft.competition.status}</p>
-            )}
-          </div>
-        </div>
+      {screen === "predraft" && (
+        gameData ? (
+          (() => {
+            const mapped = mapGameDataToPreDraftProps(gameData);
+            return (
+              <div className="fixed inset-0 z-40 overflow-auto bg-background/0">
+                <PreDraftScreen
+                  gameData={gameData}
+                  startlist={mapped.startlist}
+                  players={mapped.players}
+                  sessions={mapped.sessions}
+                  currentJumperDetails={mapped.currentJumperDetails}
+                  nextJumpInSeconds={mapped.nextJumpInSeconds}
+                  jumpersRemainingInSession={mapped.jumpersRemainingInSession}
+                />
+              </div>
+            );
+          })()
+        ) : (
+          <PreDraftDemo onBack={() => setScreen("none")} />
+        )
       )}
 
       {screen === "draft" && gameData && (
@@ -299,7 +324,7 @@ export default function HomePage() {
           <div className="text-center text-white">
             <h2 className="text-4xl font-bold mb-4">Draft Phase</h2>
             <p>Order: {gameData.draft?.orderPolicy}</p>
-            {gameData.draft?.currentPlayerId && (
+            {gameData.draft?.nextPlayers?.[0] && (
               <p>Current player turn</p>
             )}
           </div>
@@ -322,7 +347,7 @@ export default function HomePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
           <div className="text-center text-white">
             <h2 className="text-4xl font-bold mb-4">Game Ended</h2>
-            <p>Policy: {gameData.ended?.policy}</p>
+            <p>Winner: {gameData.ended?.winner.name} {gameData.ended?.winner.surname}</p>
             <p>Final rankings available</p>
           </div>
         </div>
