@@ -35,6 +35,7 @@ export interface MatchmakingDialogProps {
     status: 'waiting' | 'starting' | 'failed';
     reason?: string;
     onCancel: () => void;
+    busy?: boolean; // Added busy prop
 }
 export function MatchmakingDialog({
     open,
@@ -43,6 +44,7 @@ export function MatchmakingDialog({
     status,
     reason,
     onCancel,
+    busy = false,
 }: MatchmakingDialogProps) {
     const percent = max != null && max > 0 ? (current / max) * 100 : 0;
     const dots = useDots();
@@ -90,9 +92,11 @@ export function MatchmakingDialog({
                     <Button
                         variant="outline"
                         onClick={onCancel}
+                        disabled={busy} // Disable button when busy
                         className="w-32 cursor-pointer transition active:scale-95"
                     >
                         {status === 'failed' ? 'Zamknij' : 'Przerwij'}
+                        {busy && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                     </Button>
                 </div>
             </DialogContent>

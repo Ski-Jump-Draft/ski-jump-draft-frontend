@@ -17,8 +17,6 @@ interface TransitionProps {
     nextStatus?: NextStatusDto | null;
 }
 
-
-
 export function TransitionScreen({ phases, currentIndex, targetUtc, nextStatus, visible }: TransitionProps & { visible: boolean }) {
     // TransitionScreen render
 
@@ -66,7 +64,7 @@ export function TransitionScreen({ phases, currentIndex, targetUtc, nextStatus, 
                             <div className="flex items-center justify-center">
                                 {nextStatus ? (
                                     <PhaseTimer
-                                        timeSpan={nextStatus.in}
+                                        targetTime={nextStatus.in}
                                         nextPhase={nextStatus.status}
                                     />
                                 ) : (

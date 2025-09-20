@@ -35,13 +35,20 @@ export function useMatchmakingState(
             });
         };
 
+        const onError = (e: any) => {
+            console.error('MatchmakingEventSource error:', e);
+            try { es.close(); } catch { }
+        };
+
         // działa, jeśli wysyłasz nazwany event:
         es.addEventListener('matchmaking-updated', handle);
         // …i/lub domyślny:
         es.onmessage = handle;
+        es.onerror = onError;
 
         return () => {
             es.removeEventListener('matchmaking-updated', handle);
+            es.onerror = null as any;
             es.close();
         };
     }, [matchId, onState]);

@@ -28,6 +28,7 @@ export function useGameHubStream(
     gameId: string | null,
     onEvent: (ev: GameHubEvent) => void,
     matchmakingId?: string | null,
+    onDisconnected?: () => void,
 ): void {
     // trzyma stale aktualną referencję do onEvent (nie wywoła useEffect przy każdej zmianie funkcji!)
     const onEventRef = useRef(onEvent);
@@ -35,35 +36,40 @@ export function useGameHubStream(
         onEventRef.current = onEvent;
     }, [onEvent]);
 
+    const connectionRef = useRef<HubConnection | null>(null);
+
     useEffect(() => {
         if (!gameId && !matchmakingId) {
+            console.log("useGameHubStream: No IDs provided, skipping connection.");
+            // Stop any existing connection if IDs are cleared
+            if (connectionRef.current) {
+                console.log("useGameHubStream: Stopping active connection due to missing IDs.");
+                connectionRef.current.stop();
+                connectionRef.current = null;
+            }
             return;
         }
 
         const targetId = gameId || matchmakingId;
-        const isMatchmaking = !gameId && matchmakingId;
-
-        // Starting SignalR connection
+        const isMatchmaking = !gameId && !!matchmakingId;
+        console.log('useGameHubStream: Starting connection', { gameId, matchmakingId, isMatchmaking, targetId });
 
         const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5150';
         const connection = new HubConnectionBuilder()
             .withUrl(`${base}/game/hub`)
-            .withAutomaticReconnect()
             .build();
 
         const startConnection = async () => {
             try {
                 await connection.start();
+                console.log("SignalR connection started.");
 
                 if (isMatchmaking) {
-                    // Join the matchmaking group
                     await connection.invoke('JoinMatchmaking', matchmakingId);
                 } else {
-                    // Join the game group
                     await connection.invoke('JoinGame', gameId);
                 }
 
-                // Set up event handlers
                 connection.on('GameUpdated', (data: GameUpdatedDto) => {
                     onEventRef.current({
                         type: 'gameUpdated',
@@ -78,10 +84,8 @@ export function useGameHubStream(
                     });
                 });
 
-                // Only listen for GameStartedAfterMatchmaking when in matchmaking mode
                 if (isMatchmaking) {
                     connection.on('GameStartedAfterMatchmaking', async (data: any) => {
-                        // Immediately switch to game group to catch GameUpdated events
                         try {
                             await connection.invoke('JoinGame', data.gameId);
                         } catch (err) {
@@ -97,15 +101,27 @@ export function useGameHubStream(
                     });
                 }
 
+                connection.onclose((error) => {
+                    console.error('SignalR connection closed:', error);
+                    if (onDisconnected) {
+                        onDisconnected();
+                    }
+                });
+
             } catch (err) {
                 console.error('SignalR connection error:', err);
+                if (onDisconnected) {
+                    onDisconnected();
+                }
             }
         };
 
         startConnection();
+        connectionRef.current = connection;
 
         return () => {
             connection.stop();
+            connectionRef.current = null;
         };
-    }, [gameId, matchmakingId]); // <- gameId i matchmakingId
+    }, [gameId, matchmakingId]);
 }

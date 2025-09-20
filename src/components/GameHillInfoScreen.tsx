@@ -1,6 +1,12 @@
 'use client';
 import { Countdown } from '@/components/ui/Countdown';
-import { Hill } from '@/types/game';
+
+interface Hill {
+    location: string;
+    hs: number;
+    countryCode: string;
+    id?: string;
+}
 
 interface HillInfoProps {
     hill: Hill;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { generateNickname } from "@/utils/nickname";
@@ -11,7 +11,11 @@ import { TransitionScreen } from "@/components/TransitionScreen";
 import { GameHillInfoScreen } from "@/components/GameHillInfoScreen";
 import { PreDraftDemo } from "@/components/PreDraftDemo";
 import { PreDraftScreen } from "@/components/PreDraftScreen";
+import { DraftScreen } from "@/components/draft/DraftScreen";
+import { DraftDemo } from "@/components/draft/DraftDemo";
+import { DraftBreakDemo } from "@/components/draft/DraftBreakDemo";
 import { mapGameDataToPreDraftProps } from "@/lib/gameMapper";
+import { fisToAlpha2 } from "@/utils/countryCodes";
 import {
   GameUpdatedEvent,
   GameEndedEvent,
@@ -20,18 +24,23 @@ import {
 } from "@/hooks/api_streams/useGameHubStream";
 // import { useMatchmakingSignalR, GameStartedAfterMatchmakingEvent, MatchmakingSignalREvent } from "@/hooks/api_streams/useMatchmakingSignalR";
 import { GameUpdatedDto, GameStatus } from "@/types/game";
+import { Toaster, toast } from 'sonner';
+import { GameEndedDemo } from "@/components/GameEndedDemo";
+import { GameEndedScreen } from "@/components/GameEndedScreen";
 
 /* ───────────────────────────────────────────── */
 
 export default function HomePage() {
+  const abortedByUserRef = useRef(false);
   /* nickname */
   const [nick, setNick] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   useEffect(() => setPlaceholder(generateNickname()), []);
 
   /* matchmaking */
-  const [matchId, setMatchmakingId] = useState<string | null>(null);
+  const [matchmakingId, setMatchmakingId] = useState<string | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [playerNick, setPlayerNick] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [max, setMax] = useState(0);
   const [status, setStatus] = useState<"idle" | "waiting" | "starting" | "failed">("idle");
@@ -49,8 +58,72 @@ export default function HomePage() {
 
   /* ekrany */
   const [screen, setScreen] = useState<"none" | "transition1" | "hill" | "transition2" | "predraft" | "draft" | "competition" | "ended">("none");
+  const [isDemo, setIsDemo] = useState(false);
+  const [preDraftEndedAt, setPreDraftEndedAt] = useState<number | null>(null);
+  // const [shouldConnectToGameHub, setShouldConnectToGameHub] = useState(false); // REMOVED
 
-  useMatchmakingState(matchId, s => {
+  // Helper: support backend ranking serialized as { Position, Points }
+  const readRankingTuple = (value: unknown): [number, number] => {
+    if (Array.isArray(value)) {
+      return [Number(value[0] ?? 0), Number(value[1] ?? 0)];
+    }
+    if (value && typeof value === 'object') {
+      const v = value as Record<string, unknown>;
+      // Backend sends { position: number, points: number } (lowercase)
+      const pos = Number(v.position ?? v.Position ?? 0);
+      const pts = Number(v.points ?? v.Points ?? 0);
+      return [pos, pts];
+    }
+    return [0, 0];
+  };
+
+  // Handle 5-second countdown after pre-draft ends
+  useEffect(() => {
+    if (preDraftEndedAt) {
+      console.log("5-second countdown started after pre-draft ended");
+      const timer = setTimeout(() => {
+        console.log("5-second countdown completed, switching to draft screen");
+        setScreen("draft");
+        setPreDraftEndedAt(null);
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [preDraftEndedAt]);
+
+  // Handle screen transitions based on nextStatus timer
+  useEffect(() => {
+    if (gameData?.nextStatus) {
+      const timeSpan = gameData.nextStatus.in;
+      const parts = timeSpan.split(':');
+      const seconds = parseInt(parts[2], 10);
+
+      if (seconds === 0) {
+        // Timer reached 0, switch to next phase
+        switch (gameData.nextStatus.status) {
+          case "Draft":
+            setScreen("draft");
+            break;
+          case "PreDraft":
+            setScreen("predraft");
+            break;
+          case "MainCompetition":
+            // If draft is not null, show draft results instead of resetting to competition screen
+            if (gameData.draft !== null) {
+              setScreen("draft");
+            } else {
+              setScreen("competition");
+            }
+            break;
+          case "Ended":
+            setScreen("ended");
+            break;
+        }
+      }
+    }
+  }, [gameData?.nextStatus]);
+
+  useMatchmakingState(matchmakingId, s => {
     setCurrent(s.playersCount);
     setMax(s.maxPlayers);
 
@@ -80,7 +153,7 @@ export default function HomePage() {
 
   /* ── 3. gameHub ── */
   useGameHubStream(
-    gameHubId || (waitingForGameStart ? null : null),  // Use gameHubId if available, otherwise matchmaking
+    null,  // Force single-connection mode: use matchmakingId only and switch groups internally
     (ev: GameHubEvent) => {
       switch (ev.type) {
         case "gameUpdated":
@@ -88,41 +161,96 @@ export default function HomePage() {
           setGameStatus(ev.data.status);
 
           // Clear matchmakingId after receiving first GameUpdated, but only if we have gameHubId
-          if (matchId && !gameHubId) {
-            console.log('🎮 Game started, switching to game mode');
-            setGameHubId(ev.data.gameId);
-            setMatchmakingId(null);
+          // This is the signal that game has started and we received first game data
+          if (matchmakingId) {
+            // Stay on the same SignalR connection; do not switch to a new game connection here
             setWaitingForGameStart(false);
+
+            // Update playerId to game player ID after matchmaking
+            if (playerNick && ev.data.header?.players) {
+              const gamePlayer = ev.data.header.players.find(p => p.nick === playerNick);
+              if (gamePlayer) {
+                setPlayerId(gamePlayer.playerId);
+                console.log("Updating playerId from matchmaking to game:", gamePlayer.playerId);
+              }
+            }
           }
 
+          // Handle screen switching based on game status
+          // First, check for `nextStatus` to handle timed transitions
           // If we have nextStatus, stay on transition screen and let timer handle the switch
           // But if nextStatus.status is the same as current status, we're already in the right phase
           if (ev.data.nextStatus && ev.data.nextStatus.status !== ev.data.status) {
             // Don't change screen yet - let the timer handle it
+            setScreen("transition1");
           } else {
             // No nextStatus, switch immediately based on game status
             switch (ev.data.status) {
               case "PreDraft":
-                setScreen("predraft");
+                // Only show predraft if we have active competition data
+                if (ev.data.preDraft?.competition) {
+                  setScreen("predraft");
+                }
+                // If pre-draft ended but we have preDraftEndedAt, stay on predraft screen for 5 seconds
+                // The useEffect will handle switching to draft after 5 seconds
+                break;
+              case "Break Draft":
+                // Stay on predraft screen with timer to draft, if we have preDraftEndedAt set
+                if (preDraftEndedAt !== null) {
+                  console.log("Break Draft status received, staying on predraft screen for 5-sec countdown");
+                  setScreen("predraft");
+                } else {
+                  console.log("Break Draft status received, but no 5-sec countdown active - switching to draft");
+                  setScreen("draft");
+                }
                 break;
               case "Draft":
                 setScreen("draft");
                 break;
               case "MainCompetition":
-                setScreen("competition");
+              case "Break MainCompetition":
+                // If draft is finished, show draft results with live main competition data
+                if (ev.data.draft?.ended) {
+                  setScreen("draft");
+                } else {
+                  setScreen("competition");
+                }
                 break;
               case "Ended":
                 setScreen("ended");
                 break;
               case "Break":
-                // Handle break state if needed
+                // Generic break - check next status
+                if (ev.data.nextStatus?.status === "PreDraft") {
+                  setScreen("predraft");
+                } else if (ev.data.nextStatus?.status === "Draft") {
+                  setScreen("draft");
+                } else if (ev.data.nextStatus?.status === "MainCompetition") {
+                  setScreen("competition");
+                }
+                break;
+              default:
+                setScreen("none");
                 break;
             }
           }
+
+          // Detect pre-draft ending - when status changes to "Break Draft" and we have lastCompetitionState
+          if (ev.data.status === "Break Draft" && ev.data.lastCompetitionState && preDraftEndedAt === null) {
+            console.log("Pre-draft ended, starting 5-second delay. Status:", ev.data.status, "Results:", ev.data.lastCompetitionState.results.length);
+            setPreDraftEndedAt(Date.now());
+            setScreen("predraft"); // Ensure we're on predraft screen for the 5-second countdown
+          }
+
+          // Show/keep draft results view during Break MainCompetition
+          if (ev.data.status === "Break MainCompetition" && ev.data.draft !== null) {
+            setScreen('draft');
+            break;
+          }
+
           break;
 
         case "gameEnded":
-          console.log('Game ended:', ev.gameId);
           setScreen("ended");
           break;
 
@@ -132,7 +260,28 @@ export default function HomePage() {
           // We'll clear matchmakingId after receiving the first GameUpdated
           break;
       }
-    }, gameHubId ? null : (waitingForGameStart ? matchId : null));
+    },
+    matchmakingId,
+    () => {
+      // Connection lost handler
+      if (abortedByUserRef.current) {
+        // Suppress toast when user intentionally cancelled matchmaking
+        abortedByUserRef.current = false;
+        return;
+      }
+      console.log('Connection lost - returning to main menu');
+      toast.error("Utracono połączenie z serwerem.", {
+        style: {
+          backgroundColor: '#440000', // Darker red background
+          color: '#ffcccc',       // Lighter red text
+          borderColor: '#ff0000',  // Red border
+          maxWidth: '400px',      // Limit width
+        },
+        duration: 5000, // Make it visible for a longer time
+      });
+      hardReset(); // This will clear matchmakingId and stop the connection
+    }
+  );
 
   /* ── 3. harmonogram ekranów ── */
   // Now handled by game status updates from SignalR
@@ -148,9 +297,10 @@ export default function HomePage() {
     try {
       const nickSend = (nick.trim() || placeholder).slice(0, 24);
       const info: JoinResponse = await joinMatchmaking(nickSend);
-      console.log(info.matchmakingId);
       setMatchmakingId(info.matchmakingId);
       setPlayerId(info.playerId);
+      setPlayerNick(info.correctedNick);
+      // setShouldConnectToGameHub(true); // REMOVED - connection will start because matchmakingId is set
 
       const snapshot = await getMatchmaking(info.matchmakingId);
       setCurrent(snapshot.playersCount);
@@ -187,14 +337,15 @@ export default function HomePage() {
 
   /* ── 5. PRZERWIJ ── */
   const abort = useCallback(async () => {
-    if (matchId && playerId) {
-      try { await leaveMatchmaking(matchId, playerId); } catch { }
+    if (matchmakingId && playerId) {
+      try { await leaveMatchmaking(matchmakingId, playerId); } catch { }
     }
+    abortedByUserRef.current = true;
     hardReset();
-  }, [matchId, playerId]);
+  }, [matchmakingId, playerId]);
 
   const hardReset = () => {
-    setMatchmakingId(null); setPlayerId(null); setGameHubId(null);
+    setMatchmakingId(null); setPlayerId(null); setPlayerNick(null); setGameHubId(null);
     setCurrent(0); setMax(0);
     setStatus("idle"); setReason(undefined);
     setDialogOpen(false); setBusy(false);
@@ -203,6 +354,9 @@ export default function HomePage() {
     setWaitingForGameStart(false);
     setJoinError(null);
     setScreen("none");
+    setIsDemo(false);
+    setPreDraftEndedAt(null);
+    // setShouldConnectToGameHub(false); // REMOVED
   };
 
   /* ── UI ── */
@@ -230,19 +384,52 @@ export default function HomePage() {
         </div>
 
         {/* Demo button */}
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-3">
           <Button
             variant="outline"
-            onClick={() => setScreen("predraft")}
+            onClick={() => {
+              setIsDemo(true);
+              setScreen("predraft");
+            }}
             className="text-white border-white/30 hover:bg-white/10"
           >
             Demo: PreDraft Screen
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsDemo(true);
+              setScreen("draft");
+            }}
+            className="text-white border-white/30 hover:bg-white/10"
+          >
+            Demo: Draft Screen
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsDemo(true);
+              setScreen("competition");
+            }}
+            className="text-white border-white/30 hover:bg-white/10"
+          >
+            Demo: Draft Break
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsDemo(true);
+              setScreen("ended");
+            }}
+            className="text-white border-white/30 hover:bg-white/10"
+          >
+            Demo: Wyniki końcowe
           </Button>
         </div>
 
         {/* Error display */}
         {joinError && (
-          <div className="mt-4 p-4 rounded-lg border border-red-500/50 bg-red-500/10 backdrop-blur-sm">
+          <div className="mt-4 p-4 rounded-lg border border-red-500/50 bg-red-500/10 backdrop-blur-sm max-w-md">
             <div className="flex items-center gap-3">
               <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
                 <span className="text-white text-xs font-bold">!</span>
@@ -275,7 +462,9 @@ export default function HomePage() {
           status={status === "starting" ? "starting" : status === "failed" ? "failed" : "waiting"}
           reason={reason}
           onCancel={abort}
+          busy={busy}
         />
+        <Toaster richColors />
       </div>
 
       {/* Transition screens */}
@@ -297,11 +486,16 @@ export default function HomePage() {
 
       {/* Game screens based on status */}
       {screen === "predraft" && (
-        gameData ? (
+        isDemo ? (
+          <PreDraftDemo onBack={() => {
+            setIsDemo(false);
+            setScreen("none");
+          }} />
+        ) : gameData && (gameData.preDraft || gameData.lastCompetitionState) ? (
           (() => {
             const mapped = mapGameDataToPreDraftProps(gameData);
             return (
-              <div className="fixed inset-0 z-40 overflow-auto bg-background/0">
+              <div className="fixed inset-0 z-50">
                 <PreDraftScreen
                   gameData={gameData}
                   startlist={mapped.startlist}
@@ -310,47 +504,76 @@ export default function HomePage() {
                   currentJumperDetails={mapped.currentJumperDetails}
                   nextJumpInSeconds={mapped.nextJumpInSeconds}
                   jumpersRemainingInSession={mapped.jumpersRemainingInSession}
+                  isBreak={mapped.isBreak}
+                  breakRemainingSeconds={mapped.breakRemainingSeconds}
+                  nextStatus={mapped.nextStatus}
+                  isPreDraftEnded={preDraftEndedAt !== null}
                 />
               </div>
             );
           })()
+        ) : null
+      )}
+
+      {screen === "draft" && (
+        isDemo ? (
+          <DraftDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+        ) : gameData && playerId ? (
+          <DraftScreen
+            gameData={gameData}
+            myPlayerId={playerId}
+            isReadOnly={!gameData.draft}
+          />
+        ) : null
+      )}
+
+      {screen === "competition" && (
+        isDemo ? (
+          <DraftBreakDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+        ) : gameData ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
+            <div className="text-center text-white">
+              <h2 className="text-4xl font-bold mb-4">Main Competition</h2>
+              <p>Status: {gameData.mainCompetition?.status}</p>
+              {gameData.mainCompetition?.nextJumperId && (
+                <p>Next jumper to jump</p>
+              )}
+            </div>
+          </div>
+        ) : null
+      )}
+
+      {screen === "ended" && (
+        isDemo ? (
+          <div className="fixed inset-0 z-50">
+            <GameEndedDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+          </div>
         ) : (
-          <PreDraftDemo onBack={() => setScreen("none")} />
+          <div className="fixed inset-0 z-50">
+            {(() => {
+              if (!gameData?.ended?.ranking || !gameData?.header) return null;
+              const entries = Object.entries(gameData.ended.ranking).map(([pid, v]) => ({
+                playerId: pid,
+                nick: gameData.header.players.find(p => p.playerId === pid)?.nick ?? pid,
+                points: v.points,
+                position: v.position,
+                isMe: playerId === pid,
+              })).sort((a, b) => a.position - b.position);
+              return (
+                <GameEndedScreen
+                  results={entries}
+                  onBackToMenu={() => { setScreen("none"); }}
+                  policy={gameData.ended?.policy === "PodiumAtAllCosts" ? "PodiumAtAllCosts" : "Classic"}
+                  shareUrl={typeof window !== 'undefined' ? window.location.href : undefined}
+                  myPlayerId={playerId}
+                  hillName={gameData.header.hill?.name}
+                  hillHs={Math.round(gameData.header.hill?.hs ?? 0)}
+                  hillCountryCode={gameData.header.hill?.alpha2Code}
+                />
+              );
+            })()}
+          </div>
         )
-      )}
-
-      {screen === "draft" && gameData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
-          <div className="text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">Draft Phase</h2>
-            <p>Order: {gameData.draft?.orderPolicy}</p>
-            {gameData.draft?.nextPlayers?.[0] && (
-              <p>Current player turn</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {screen === "competition" && gameData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
-          <div className="text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">Main Competition</h2>
-            <p>Status: {gameData.mainCompetition?.status}</p>
-            {gameData.mainCompetition?.nextJumperId && (
-              <p>Next jumper to jump</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {screen === "ended" && gameData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
-          <div className="text-center text-white">
-            <h2 className="text-4xl font-bold mb-4">Game Ended</h2>
-            <p>Winner: {gameData.ended?.winner.name} {gameData.ended?.winner.surname}</p>
-            <p>Final rankings available</p>
-          </div>
-        </div>
       )}
     </main>
   );
@@ -358,8 +581,8 @@ export default function HomePage() {
 
 /* listy faz */
 const PHASES = [
-  { title: "Wybór skoczni", description: "Gdzie dziś skaczemy? Mamut w Vikersund, skocznia olimpijska, a może malutkie Hinzenbach?" },
+  // { title: "Wybór skoczni", description: "Gdzie dziś skaczemy? Mamut w Vikersund, skocznia olimpijska, a może malutkie Hinzenbach?" },
   { title: "Obserwacja", description: "Przyjrzyj się formie zawodników... Za chwilę wybierasz!" },
-  { title: "Draft", description: "Wybierz swój dream-team na konkurs. Postawisz na sensację kwalifikacji, czy na sprawdzonych liderów swoich kadr?" },
+  { title: "Draft", description: "Wybierz swój dream-team na konkurs. Postawisz na sensację treningu, czy na sprawdzonych liderów swoich kadr?" },
   { title: "Konkurs", description: "Czy przeczucie było trafne? Zaraz się okaże!" },
 ];

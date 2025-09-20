@@ -1,11 +1,24 @@
 import { GameUpdatedDto, StartlistEntryDto, PlayerWithBotFlagDto, JumperDetailsDto, PreDraftSessionDto } from '@/types/game';
 
 export function mapGameDataToPreDraftProps(game: GameUpdatedDto) {
+    // Log last jump data for debugging
+    if (game.lastCompetitionResultDto || game.status === "Break Draft") {
+        console.log('=== LAST JUMP / BREAK DRAFT DATA ===');
+        console.log('status:', game.status);
+        console.log('preDraft:', !!game.preDraft);
+        console.log('lastCompetitionState:', !!game.lastCompetitionState);
+        console.log('lastCompetitionResultDto:', !!game.lastCompetitionResultDto);
+        console.log('lastCompetitionState?.results length:', game.lastCompetitionState?.results?.length || 0);
+        console.log('endedPreDraft?.endedCompetitions length:', game.endedPreDraft?.endedCompetitions?.length || 0);
+        console.log('=============================');
+    }
     const comp = game.preDraft?.competition || null;
 
     // Use startlist from CompetitionDto if available, otherwise fallback to header.jumpers
-    const startlist: StartlistEntryDto[] = comp?.startlist
-        ? comp.startlist.map(startlistJumper => {
+    // If competition is ended, use lastCompetitionState startlist
+    const activeCompetition = comp || game.lastCompetitionState;
+    const startlist: StartlistEntryDto[] = activeCompetition?.startlist
+        ? activeCompetition.startlist.map(startlistJumper => {
             // Find jumper details in header.competitionJumpers by competitionJumperId
             const competitionJumper = game.header.competitionJumpers?.find(
                 cj => cj.competitionJumperId === startlistJumper.competitionJumperId
@@ -20,7 +33,7 @@ export function mapGameDataToPreDraftProps(game: GameUpdatedDto) {
             };
         })
         : game.header.jumpers.map(jumper => ({
-            bib: jumper.bib || 0,
+            bib: 0, // GameJumperDto doesn't have bib, using default
             jumperId: jumper.gameJumperId,
             name: jumper.name,
             surname: jumper.surname,
@@ -33,12 +46,14 @@ export function mapGameDataToPreDraftProps(game: GameUpdatedDto) {
         isBot: player.isBot,
     }));
 
-    const sessions: PreDraftSessionDto[] = comp
+    // Always show results from the last competition (current or lastCompetitionState)
+    const activeComp = comp || game.lastCompetitionState;
+    const sessions: PreDraftSessionDto[] = activeComp
         ? [{
             sessionNumber: (game.preDraft?.index ?? 0) + 1,
-            results: comp.results || [],
-            isActive: true,
-            nextJumpInSeconds: comp.nextJumpInSeconds ?? undefined,
+            results: activeComp.results || [],
+            isActive: !!comp, // Only active if we have current competition
+            nextJumpInMilliseconds: comp?.nextJumpInMilliseconds ?? undefined,
         }]
         : [];
 
@@ -69,10 +84,18 @@ export function mapGameDataToPreDraftProps(game: GameUpdatedDto) {
                     gateCompensation: r.gateCompensation ?? null,
                     totalCompensation: r.totalCompensation,
                 },
-                // Find position from competition results
-                currentPosition: comp?.results?.find(result =>
-                    result.competitionJumperId === jumper.competitionJumperId
-                )?.rank as number | undefined,
+                // Find position from competition results (use lastCompetitionState if comp is null)
+                currentPosition: (() => {
+                    const activeComp = comp || game.lastCompetitionState;
+                    const foundResult = activeComp?.results?.find(result =>
+                        result.competitionJumperId === r.competitionJumperId
+                    );
+                    // Always calculate rank from sorted results for consistency
+                    const sortedResults = activeComp?.results?.slice().sort((a, b) => b.total - a.total) || [];
+                    const calculatedRank = sortedResults.findIndex(res => res.competitionJumperId === r.competitionJumperId) + 1;
+                    console.log('Calculated rank for jumper', r.competitionJumperId, ':', calculatedRank, 'from', sortedResults.length, 'results');
+                    return calculatedRank > 0 ? calculatedRank : undefined;
+                })(),
                 gatePoints: r.gateCompensation ?? undefined,
                 windPoints: r.windCompensation ?? undefined,
                 totalCompensation: r.totalCompensation,
@@ -117,8 +140,17 @@ export function mapGameDataToPreDraftProps(game: GameUpdatedDto) {
         }
     }
 
-    const nextJumpInSeconds = comp?.nextJumpInSeconds ?? 0;
-    const jumpersRemainingInSession = startlist.length - (comp?.results?.length ?? 0);
+    const nextJumpInSeconds = Math.floor((comp?.nextJumpInMilliseconds ?? 0) / 1000);
+    const jumpersRemainingInSession = startlist.length - (activeComp?.results?.length ?? 0);
+
+    // Check if we're in a break - either game.status is "Break" or NextStatus indicates a break
+    const isBreak = (game.status === "Break" && game.break !== null) ||
+        (game.nextStatus?.status === "PreDraftNextCompetition") ||
+        (game.status === "Break Draft" && game.nextStatus?.status === "Draft");
+    const breakRemainingSeconds = (game.nextStatus?.status === "PreDraftNextCompetition" ?
+        parseInt(game.nextStatus.in.split(':')[2]) : 0) ??
+        (game.nextStatus?.status === "Draft" ?
+            parseInt(game.nextStatus.in.split(':')[2]) : 0);
 
     return {
         gameData: game,
@@ -128,5 +160,8 @@ export function mapGameDataToPreDraftProps(game: GameUpdatedDto) {
         currentJumperDetails,
         nextJumpInSeconds,
         jumpersRemainingInSession,
+        isBreak,
+        breakRemainingSeconds,
+        nextStatus: game.nextStatus,
     };
 }

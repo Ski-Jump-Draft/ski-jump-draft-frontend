@@ -3,12 +3,15 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface PhaseTimerProps {
-    timeSpan: string; // TimeSpan from backend (e.g., "00:00:18")
+    targetTime: string; // TimeSpan like "00:00:05.123"
     nextPhase: string;
+    sessionNumber?: number;
+    label?: string;
+    subtractSeconds?: number;
 }
 
-export function PhaseTimer({ timeSpan, nextPhase }: PhaseTimerProps) {
-    const [seconds, setSeconds] = useState(0);
+export const PhaseTimer = ({ targetTime, nextPhase, sessionNumber, label, subtractSeconds = 0 }: PhaseTimerProps) => {
+    const [remainingSeconds, setRemainingSeconds] = useState(0);
     const [isLowTime, setIsLowTime] = useState(false);
 
     // PhaseTimer render
@@ -16,6 +19,7 @@ export function PhaseTimer({ timeSpan, nextPhase }: PhaseTimerProps) {
     useEffect(() => {
         // Parse TimeSpan string (format: "00:00:18" or "00:01:30")
         const parseTimeSpan = (timeSpan: string): number => {
+            if (!timeSpan) return 0;
             const parts = timeSpan.split(':');
             if (parts.length === 3) {
                 const hours = parseInt(parts[0], 10);
@@ -26,14 +30,14 @@ export function PhaseTimer({ timeSpan, nextPhase }: PhaseTimerProps) {
             return 0;
         };
 
-        const totalSeconds = parseTimeSpan(timeSpan);
-        setSeconds(totalSeconds);
+        const totalSeconds = parseTimeSpan(targetTime);
+        setRemainingSeconds(totalSeconds);
         setIsLowTime(totalSeconds <= 6);
 
         // Always start the interval, even if totalSeconds is 0
 
         const interval = setInterval(() => {
-            setSeconds(prev => {
+            setRemainingSeconds(prev => {
                 const newSeconds = Math.max(0, prev - 1); // Don't go below 0
                 const newIsLowTime = newSeconds <= 6;
 
@@ -45,7 +49,7 @@ export function PhaseTimer({ timeSpan, nextPhase }: PhaseTimerProps) {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [timeSpan, nextPhase]);
+    }, [targetTime, nextPhase]);
 
     const formatTime = (seconds: number): string => {
         if (seconds <= 0) return '0';
@@ -89,7 +93,7 @@ export function PhaseTimer({ timeSpan, nextPhase }: PhaseTimerProps) {
                 {/* Time text */}
                 <div className="flex flex-col items-center justify-center">
                     <span className="text-2xl font-bold leading-none text-white">
-                        {formatTime(seconds)}
+                        {formatTime(remainingSeconds)}
                     </span>
                     <span className="text-xs font-medium leading-none mt-1 text-white/80">
                         sekund

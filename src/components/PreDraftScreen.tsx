@@ -5,7 +5,9 @@ import { GameUpdatedDto, PreDraftDto, StartlistEntryDto, PlayerWithBotFlagDto, J
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { fisToAlpha2 } from '@/utils/countryCodes';
 import { Bot, User, Clock, Flag } from 'lucide-react';
+import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 
 interface PreDraftScreenProps {
     gameData: GameUpdatedDto;
@@ -13,8 +15,12 @@ interface PreDraftScreenProps {
     players: PlayerWithBotFlagDto[];
     sessions: PreDraftSessionDto[];
     currentJumperDetails?: JumperDetailsDto;
-    nextJumpInSeconds?: number;
+    nextJumpInSeconds?: number; // kept for external mapper; we convert from ms there
     jumpersRemainingInSession: number;
+    isBreak?: boolean;
+    breakRemainingSeconds?: number;
+    nextStatus?: { status: string; in: string } | null;
+    isPreDraftEnded?: boolean; // Show 5-second countdown instead of full break time
 }
 
 export function PreDraftScreen({
@@ -24,15 +30,37 @@ export function PreDraftScreen({
     sessions,
     currentJumperDetails,
     nextJumpInSeconds = 0,
-    jumpersRemainingInSession
+    jumpersRemainingInSession,
+    isBreak = false,
+    breakRemainingSeconds = 0,
+    nextStatus = null,
+    isPreDraftEnded = false
 }: PreDraftScreenProps) {
     const [activeSession, setActiveSession] = useState(1);
     const [countdown, setCountdown] = useState(nextJumpInSeconds);
+    const [lastHighlightedJumper, setLastHighlightedJumper] = useState<string | null>(null);
+
+    // Log session index from backend
+    const sessionIndex = gameData.preDraft?.index != null ? gameData.preDraft.index : null;
+    const sessionDisplay = (sessionIndex != null ? sessionIndex + 1 : 1);
+    useEffect(() => {
+        console.log('PreDraftScreen session:', {
+            preDraftIndex: gameData.preDraft?.index,
+            preDraftsCount: gameData.preDraftsCount,
+            sessionDisplay
+        });
+    }, [gameData.preDraft?.index, gameData.preDraftsCount]);
+
+    // Check if competition is ended (all jumpers done or status is "Ended")
+    // But don't gray out if it's just a break between PreDraft competitions
+    const isCompetitionEnded = (gameData.lastCompetitionState?.status === "Ended" ||
+        (gameData.lastCompetitionState?.startlist?.every(jumper => jumper.done) ?? false)) &&
+        gameData.nextStatus?.status !== "PreDraftNextCompetition";
 
     useEffect(() => {
         // Reset countdown when backend provides a new timer or a new jump cycle starts
-        // Key on progress bar ensures immediate reset, transition provides smooth animation
-        const limitedCountdown = Math.min(nextJumpInSeconds, 6);
+        // Limit to 6s for UI progress bar
+        const limitedCountdown = Math.min(Math.floor(nextJumpInSeconds), 6);
         setCountdown(limitedCountdown);
     }, [
         nextJumpInSeconds,
@@ -48,6 +76,19 @@ export function PreDraftScreen({
         }
     }, [countdown]);
 
+    // Track new jumper and remove highlight after 3 seconds
+    useEffect(() => {
+        const newJumperId = gameData.lastCompetitionResultDto?.competitionJumperId;
+        if (newJumperId && newJumperId !== lastHighlightedJumper) {
+            setLastHighlightedJumper(newJumperId);
+            // Remove highlight after 3 seconds
+            const timer = setTimeout(() => {
+                setLastHighlightedJumper(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [gameData.lastCompetitionResultDto?.competitionJumperId, lastHighlightedJumper]);
+
     // Mock current jumper ID for demonstration
     const currentJumperId = currentJumperDetails?.gameJumperId;
 
@@ -58,35 +99,8 @@ export function PreDraftScreen({
     };
 
     const getCountryFlag = (countryCode: string) => {
-        // Map FIS country codes to flag files
-        const flagMap: Record<string, string> = {
-            'GER': 'de.svg',
-            'POL': 'pl.svg',
-            'AUT': 'at.svg',
-            'NOR': 'no.svg',
-            'JAP': 'jp.svg',
-            'SLO': 'si.svg',
-            'SUI': 'ch.svg',
-            'USA': 'us.svg',
-            'FIN': 'fi.svg',
-            'CZE': 'cz.svg',
-            'RUS': 'ru.svg',
-            "EST": "ee.svg",
-            'FRA': 'fr.svg',
-            'ITA': 'it.svg',
-            'SWE': 'se.svg',
-            'CAN': 'ca.svg',
-            "ROU": "ro.svg",
-            "UKR": "ua.svg",
-            "BUL": "bg.svg",
-            "KAZ": "kz.svg",
-            "TUR": "tr.svg",
-            "CHN": "cn.svg",
-            "SVK": "sk.svg",
-            "KOR": "kr.svg",
-
-        };
-        return `/flags/${flagMap[countryCode] || 'xx.svg'}`;
+        const alpha2Code = fisToAlpha2(countryCode) || 'xx';
+        return `/flags/${alpha2Code}.svg`;
     };
 
     const activeSessionData = sessions.find(s => s.sessionNumber === activeSession);
@@ -101,7 +115,6 @@ export function PreDraftScreen({
         ? { name: nextJumperInfo.name, surname: nextJumperInfo.surname, countryFisCode: nextJumperInfo.countryFisCode }
         : undefined;
 
-
     return (
         <div className="min-h-screen bg-background p-4 lg:p-6 flex flex-col">
             {/* Header */}
@@ -110,7 +123,7 @@ export function PreDraftScreen({
                     <div className="flex flex-col sm:flex-row sm:items-end gap-2 lg:gap-4 mb-2">
                         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Faza Obserwacji</h1>
                         <span className="text-base lg:text-lg text-muted-foreground">
-                            Sesja {gameData.preDraft?.index !== undefined ? gameData.preDraft.index + 1 : 1}/{gameData.preDraftsCount}
+                            Sesja {sessionDisplay}/{gameData.preDraftsCount}
                         </span>
                     </div>
                     <p className="text-xs lg:text-sm text-muted-foreground max-w-2xl">
@@ -119,10 +132,19 @@ export function PreDraftScreen({
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="bg-green-600 text-white px-3 lg:px-4 py-2 rounded-full flex items-center gap-2">
-                        <span className="text-xl lg:text-2xl font-bold">{jumpersRemainingInSession}</span>
-                        <span className="text-xs lg:text-sm">skoczków do końca sesji</span>
-                    </div>
+                    {isBreak && nextStatus ? (
+                        <SimplePhaseTimer
+                            label="Draft"
+                            timeSpan={nextStatus.in}
+                            subtractSeconds={0}
+                            initialSeconds={isPreDraftEnded ? 5 : undefined}
+                        />
+                    ) : (
+                        <div className="bg-green-600 text-white px-3 lg:px-4 py-2 rounded-full flex items-center gap-2">
+                            <span className="text-xl lg:text-2xl font-bold">{jumpersRemainingInSession}</span>
+                            <span className="text-xs lg:text-sm">skoczków do końca sesji</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -130,19 +152,20 @@ export function PreDraftScreen({
                 {/* Left Sidebar - Start List & Players */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col h-full">
                     {/* Start List - 3/5 of height */}
-                    <Card className="p-3 lg:p-4 flex flex-col" style={{ height: '60%', maxHeight: '60vh' }}>
+                    <Card className={`p-3 lg:p-4 flex flex-col ${isCompetitionEnded ? 'opacity-50' : ''}`} style={{ height: '60%', maxHeight: '60vh' }}>
                         <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Lista startowa</h3>
                         <div className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto">
                             {startlist.map((entry, index) => {
                                 // In real data, nextJumperId is already competitionJumperId
                                 const nextJumperId = gameData.preDraft?.competition?.nextJumperId;
                                 const isNextJumper = entry.jumperId === nextJumperId;
-                                const isCompleted = activeSessionData?.results.some(r => r.competitionJumperId === entry.jumperId);
+                                // Check if jumper completed in current round (not in selected session)
+                                const isCompleted = gameData.preDraft?.competition?.results.some(r => r.competitionJumperId === entry.jumperId);
 
 
                                 return (
                                     <div
-                                        key={`startlist-${entry.bib}`}
+                                        key={`startlist-${entry.jumperId}`}
                                         className={`flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-lg transition-colors ${isNextJumper
                                             ? 'bg-slate-500/15 border border-slate-400/30'
                                             : isCompleted
@@ -193,23 +216,10 @@ export function PreDraftScreen({
                 {/* Center - Results Table */}
                 <div className="lg:w-1/2 flex flex-col">
                     <Card className="p-3 lg:p-4 flex-1 flex flex-col max-h-[85vh]">
-                        <div className="flex gap-2 mb-4 flex-shrink-0">
-                            {sessions.map((session) => (
-                                <Button
-                                    key={session.sessionNumber}
-                                    variant={activeSession === session.sessionNumber ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setActiveSession(session.sessionNumber)}
-                                    className={activeSession === session.sessionNumber ? "bg-red-600 hover:bg-red-700" : ""}
-                                >
-                                    Sesja {session.sessionNumber}
-                                </Button>
-                            ))}
-                        </div>
 
                         <div className="overflow-y-auto lg:overflow-y-auto flex-1 min-h-0">
                             <div className="space-y-1">
-                                {activeSessionData?.results
+                                {(gameData.preDraft?.competition?.results || gameData.lastCompetitionState?.results || [])
                                     .sort((a, b) => a.rank - b.rank) // Sort by rank ascending
                                     .map((result, index) => {
                                         // Find jumper details from competitionJumpers
@@ -217,13 +227,12 @@ export function PreDraftScreen({
                                             cj => cj.competitionJumperId === result.competitionJumperId
                                         );
 
-                                        // Check if this is the last jumper who jumped (from lastCompetitionResultDto)
-                                        const lastJumperId = gameData.lastCompetitionResultDto?.competitionJumperId;
-                                        const isLastAdded = result.competitionJumperId === lastJumperId;
+                                        // Check if this jumper should be highlighted (newly added)
+                                        const isLastAdded = result.competitionJumperId === lastHighlightedJumper;
                                         return (
                                             <div
                                                 key={result.competitionJumperId}
-                                                className={`flex items-center gap-4 p-3 rounded-lg transition-all duration-500 ease-in-out ${isLastAdded ? 'bg-yellow-500/10 border border-yellow-500/30' : 'hover:bg-muted/50'
+                                                className={`flex items-center gap-4 p-3 rounded-lg ${isLastAdded ? 'bg-green-500/15 border border-green-500/40 animate-card-reveal' : 'hover:bg-muted/50 transition-colors duration-200'
                                                     }`}
                                             >
                                                 <span className="text-sm font-mono text-muted-foreground w-8">{result.rank}</span>
@@ -245,12 +254,20 @@ export function PreDraftScreen({
                                                     </span>
                                                 </div>
                                                 <div className="text-right" style={{ marginLeft: '-20px' }}>
-                                                    <div className="text-sm font-mono text-foreground">
-                                                        {result.rounds[result.rounds.length - 1]?.distance.toFixed(1)}m
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {result.rounds[result.rounds.length - 1]?.points.toFixed(1)}p
-                                                    </div>
+                                                    {result.rounds.length > 0 ? (
+                                                        <>
+                                                            <div className="text-sm font-mono text-foreground">
+                                                                {result.rounds[result.rounds.length - 1]?.distance.toFixed(1)}m
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {result.rounds[result.rounds.length - 1]?.points.toFixed(1)}p
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="text-xs text-muted-foreground">
+                                                            Brak skoków
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -263,10 +280,10 @@ export function PreDraftScreen({
                 {/* Right Sidebar - Countdown & Jumper Details */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col">
                     {/* Next Jump Countdown */}
-                    <Card className="p-3 lg:p-4 flex-shrink-0">
+                    <Card className={`p-3 lg:p-4 flex-shrink-0 ${isCompetitionEnded ? 'opacity-50' : ''}`}>
                         <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex items-center gap-2">
                             <span>Następny skok:</span>
-                            {nextJumperDisplay && (
+                            {nextJumperDisplay && !isCompetitionEnded && (
                                 <>
                                     <img
                                         src={getCountryFlag(nextJumperDisplay.countryFisCode)}
@@ -278,130 +295,137 @@ export function PreDraftScreen({
                                     </span>
                                 </>
                             )}
+                            {isCompetitionEnded && (
+                                <span className="text-muted-foreground">Konkurs zakończony</span>
+                            )}
                         </h3>
-                        <div className="relative bg-muted rounded-lg overflow-hidden">
-                            <div
-                                key={`progress-${gameData?.lastCompetitionResultDto?.competitionJumperId || 'initial'}`}
-                                className="h-8 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg transition-all duration-1000 ease-linear"
-                                style={{ width: `${((6 - countdown) / 6) * 100}%` }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-sm font-bold text-white drop-shadow-lg">
-                                    {countdown}s
-                                </span>
+                        {!isCompetitionEnded && (
+                            <div className="relative bg-muted rounded-lg overflow-hidden">
+                                <div
+                                    key={`progress-${gameData?.lastCompetitionResultDto?.competitionJumperId || 'initial'}`}
+                                    className="h-8 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg"
+                                    style={{ width: `${((6 - countdown) / 6) * 100}%` }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-sm font-bold text-white drop-shadow-lg">
+                                        {countdown}s
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </Card>
 
                     {/* Current Jumper Details */}
                     {currentJumperDetails && (
-                        <Card key={currentJumperDetails.gameJumperId + String(currentJumperDetails.lastJumpResult?.points)} className="p-3 lg:p-4 flex-shrink-0 animate-card-reveal reveal-shader-top">
-                            <div className="space-y-4">
-                                {/* Jumper Photo & Basic Info - Compact Layout */}
-                                <div className="flex items-start gap-3">
-                                    <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
-                                        <img
-                                            src={currentJumperDetails.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentJumperDetails.name}`}
-                                            alt={currentJumperDetails.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="font-semibold text-lg text-foreground">
-                                                {currentJumperDetails.name} {currentJumperDetails.surname}
-                                            </h4>
+                        <div className={`relative ${isCompetitionEnded ? 'opacity-50' : ''}`}>
+                            <Card key={currentJumperDetails.gameJumperId + String(currentJumperDetails.lastJumpResult?.points)} className="p-3 lg:p-4 flex-shrink-0 animate-card-reveal reveal-shader-top">
+                                <div className="space-y-4">
+                                    {/* Jumper Photo & Basic Info - Compact Layout */}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
                                             <img
-                                                src={getCountryFlag(currentJumperDetails.countryFisCode)}
-                                                alt={currentJumperDetails.countryFisCode}
-                                                className="w-6 h-4 object-cover rounded"
+                                                src={currentJumperDetails.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentJumperDetails.name}`}
+                                                alt={currentJumperDetails.name}
+                                                className="w-full h-full object-cover"
                                             />
                                         </div>
-                                    </div>
-                                </div>
-
-                                {/* Jump Results */}
-                                {currentJumperDetails.lastJumpResult && (
-                                    <div className="space-y-6 bg-muted/30 p-4 rounded-lg">
-                                        {/* Distance and Position - Closer together */}
-                                        <div className="flex justify-center gap-8">
-                                            <div className="text-center">
-                                                <div className="text-2xl font-bold text-foreground">
-                                                    {currentJumperDetails.lastJumpResult.distance.toFixed(1)}m
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">Odległość</div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-semibold text-lg text-foreground">
+                                                    {currentJumperDetails.name} {currentJumperDetails.surname}
+                                                </h4>
+                                                <img
+                                                    src={getCountryFlag(currentJumperDetails.countryFisCode)}
+                                                    alt={currentJumperDetails.countryFisCode}
+                                                    className="w-6 h-4 object-cover rounded"
+                                                />
                                             </div>
-                                            <div className="text-center">
-                                                {typeof currentJumperDetails.currentPosition === 'number' ? (
+                                        </div>
+                                    </div>
+
+                                    {/* Jump Results */}
+                                    {currentJumperDetails.lastJumpResult && (
+                                        <div className="space-y-6 bg-muted/30 p-4 rounded-lg">
+                                            {/* Distance and Position - Closer together */}
+                                            <div className="flex justify-center gap-8">
+                                                <div className="text-center">
                                                     <div className="text-2xl font-bold text-foreground">
-                                                        {currentJumperDetails.currentPosition}
+                                                        {currentJumperDetails.lastJumpResult.distance.toFixed(1)}m
                                                     </div>
-                                                ) : null}
-                                                <div className="text-sm text-muted-foreground">miejsce</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Divider after first line */}
-                                        <div className="border-t border-border/50"></div>
-
-                                        {/* Judge Scores */}
-                                        {(currentJumperDetails.lastJumpResult.judges && currentJumperDetails.lastJumpResult.judgePoints != null) && (
-                                            <div>
-                                                <div className="grid grid-cols-5 gap-1 text-center mb-2">
-                                                    {currentJumperDetails.lastJumpResult.judges.slice(0, 5).map((score, index) => (
-                                                        <div key={index} className="text-sm font-mono">
-                                                            {score.toFixed(1)}
+                                                    <div className="text-sm text-muted-foreground">Odległość</div>
+                                                </div>
+                                                <div className="text-center">
+                                                    {typeof currentJumperDetails.currentPosition === 'number' ? (
+                                                        <div className="text-2xl font-bold text-foreground">
+                                                            {currentJumperDetails.currentPosition}
                                                         </div>
-                                                    ))}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground text-center">
-                                                    Noty sędziowskie ({currentJumperDetails.lastJumpResult.judgePoints?.toFixed(1)}p)
+                                                    ) : null}
+                                                    <div className="text-sm text-muted-foreground">miejsce</div>
                                                 </div>
                                             </div>
-                                        )}
 
-                                        {/* Compensation Points - Horizontal Layout */}
-                                        <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                                            {currentJumperDetails.gatePoints != null && (
+                                            {/* Divider after first line */}
+                                            <div className="border-t border-border/50"></div>
+
+                                            {/* Judge Scores */}
+                                            {(currentJumperDetails.lastJumpResult.judges && currentJumperDetails.lastJumpResult.judgePoints != null) && (
                                                 <div>
-                                                    <div className={`text-base font-medium ${currentJumperDetails.gatePoints > 0 ? 'text-green-400' :
-                                                        currentJumperDetails.gatePoints < 0 ? 'text-red-400' : 'text-muted-foreground'
-                                                        }`}>
-                                                        {currentJumperDetails.gatePoints >= 0 ? '+' : ''}{currentJumperDetails.gatePoints.toFixed(1)}p
+                                                    <div className="grid grid-cols-5 gap-1 text-center mb-2">
+                                                        {currentJumperDetails.lastJumpResult.judges.slice(0, 5).map((score: number, index: number) => (
+                                                            <div key={index} className="text-sm font-mono">
+                                                                {score.toFixed(1)}
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                    <div className="text-xs text-muted-foreground">za belkę</div>
+                                                    <div className="text-xs text-muted-foreground text-center">
+                                                        Noty sędziowskie ({currentJumperDetails.lastJumpResult.judgePoints?.toFixed(1)}p)
+                                                    </div>
                                                 </div>
                                             )}
-                                            <div>
-                                                <div className={`text-2xl font-bold ${currentJumperDetails.totalCompensation !== undefined && currentJumperDetails.totalCompensation > 0 ? 'text-green-500' :
-                                                    currentJumperDetails.totalCompensation !== undefined && currentJumperDetails.totalCompensation < 0 ? 'text-red-500' : 'text-foreground'
-                                                    }`}>
-                                                    {currentJumperDetails.totalCompensation !== undefined && currentJumperDetails.totalCompensation >= 0 ? '+' : ''}{currentJumperDetails.totalCompensation?.toFixed(1)}p
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">łącznie</div>
-                                            </div>
-                                            {currentJumperDetails.windPoints != null && (
-                                                <div>
-                                                    <div className={`text-base font-medium ${currentJumperDetails.windPoints > 0 ? 'text-green-400' :
-                                                        currentJumperDetails.windPoints < 0 ? 'text-red-400' : 'text-muted-foreground'
-                                                        }`}>
-                                                        {currentJumperDetails.windPoints >= 0 ? '+' : ''}{currentJumperDetails.windPoints.toFixed(1)}p
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">za wiatr</div>
-                                                </div>
-                                            )}
-                                        </div>
 
-                                        {/* Total Score */}
-                                        <div className="text-center pt-2 border-t border-border">
-                                            <div className="text-lg font-bold text-foreground">
-                                                {currentJumperDetails.totalScore?.toFixed(1)} punktów
+                                            {/* Compensation Points - Horizontal Layout */}
+                                            <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                                                {currentJumperDetails.gatePoints != null && (
+                                                    <div>
+                                                        <div className={`text-base font-medium ${currentJumperDetails.gatePoints > 0 ? 'text-green-400' :
+                                                            currentJumperDetails.gatePoints < 0 ? 'text-red-400' : 'text-muted-foreground'
+                                                            }`}>
+                                                            {currentJumperDetails.gatePoints >= 0 ? '+' : ''}{currentJumperDetails.gatePoints.toFixed(1)}p
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">za belkę</div>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <div className={`text-2xl font-bold ${currentJumperDetails.totalCompensation !== undefined && currentJumperDetails.totalCompensation > 0 ? 'text-green-500' :
+                                                        currentJumperDetails.totalCompensation !== undefined && currentJumperDetails.totalCompensation < 0 ? 'text-red-500' : 'text-foreground'
+                                                        }`}>
+                                                        {currentJumperDetails.totalCompensation !== undefined && currentJumperDetails.totalCompensation >= 0 ? '+' : ''}{currentJumperDetails.totalCompensation?.toFixed(1)}p
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">łącznie</div>
+                                                </div>
+                                                {currentJumperDetails.windPoints != null && (
+                                                    <div>
+                                                        <div className={`text-base font-medium ${currentJumperDetails.windPoints > 0 ? 'text-green-400' :
+                                                            currentJumperDetails.windPoints < 0 ? 'text-red-400' : 'text-muted-foreground'
+                                                            }`}>
+                                                            {currentJumperDetails.windPoints >= 0 ? '+' : ''}{currentJumperDetails.windPoints.toFixed(1)}p
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">za wiatr</div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Total Score */}
+                                            <div className="text-center pt-2 border-t border-border">
+                                                <div className="text-lg font-bold text-foreground">
+                                                    {currentJumperDetails.totalScore?.toFixed(1)} punktów
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        </Card>
+                                    )}
+                                </div>
+                            </Card>
+                        </div>
                     )}
                 </div>
             </div>

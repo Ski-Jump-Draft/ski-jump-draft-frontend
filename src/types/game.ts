@@ -1,6 +1,5 @@
-// types/game.ts
+// ───────── Root ─────────
 
-// ───────── Root Game DTO ─────────
 export interface GameUpdatedDto {
     gameId: string;
     schemaVersion: number;
@@ -10,6 +9,7 @@ export interface GameUpdatedDto {
     preDraftsCount: number;
     header: GameHeaderDto;
     preDraft: PreDraftDto | null;
+    endedPreDraft: EndedPreDraftDto | null;
     draft: DraftDto | null;
     mainCompetition: CompetitionDto | null;
     break: BreakDto | null;
@@ -18,24 +18,24 @@ export interface GameUpdatedDto {
     lastCompetitionResultDto?: CompetitionRoundResultDto | null;
 }
 
-export interface NextStatusDto {
-    status: string;
-    in: string; // TimeSpan as string from backend
-}
-
-export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "Break";
-
 // ───────── Header (stabilne słowniki referencyjne) ─────────
+
 export interface GameHeaderDto {
-    hillId: string | null;
+    draftOrderPolicy: "Classic" | "Snake" | "Random";
+    draftTimeoutInSeconds: number | null;
+    hill: GameHillDto;
     players: GamePlayerDto[];
-    jumpers: JumperDto[];
+    jumpers: GameJumperDto[];
     competitionJumpers: CompetitionJumperDto[];
 }
 
-export interface PlayerDto {
-    playerId: string;
-    nick: string;
+export interface GameHillDto {
+    name: string;
+    location: string;
+    k: number;
+    hs: number;
+    countryFisCode: string;
+    alpha2Code: string;
 }
 
 export interface GamePlayerDto {
@@ -44,17 +44,37 @@ export interface GamePlayerDto {
     isBot: boolean;
 }
 
-export interface JumperDto {
+export interface GameJumperDto {
     gameJumperId: string;
     gameWorldJumperId: string;
     name: string;
     surname: string;
     countryFisCode: string;
-    bib?: number;
+}
+
+// ───────── Next Status ─────────
+
+export interface NextStatusDto {
+    status: string;
+    in: string; // TimeSpan
+}
+
+// ───────── PreDraft ─────────
+
+export interface EndedPreDraftDto {
+    endedCompetitions: EndedCompetitionResults[];
+}
+
+export interface PreDraftDto {
+    status: "Running" | "Break";
+    index: number | null; // 0-based, can be null
+    competition: CompetitionDto | null; // null if Break
 }
 
 // ───────── Draft ─────────
+
 export interface DraftDto {
+    currentPlayerId: string | null;
     timeoutInSeconds: number | null;
     ended: boolean;
     orderPolicy: "Classic" | "Snake" | "Random";
@@ -77,16 +97,19 @@ export interface PlayerPicksDto {
 }
 
 // ───────── Competition (lekki widok) ─────────
+
 export interface CompetitionDto {
     status: CompetitionStatus; // "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended"
     startlist: StartlistJumperDto[];
-    gate: GateDto;
+    gateState: GateStateDto;
     results: CompetitionResultDto[];
-    nextJumpInSeconds?: number | null;
-    nextJumperId?: string | null; // Helper property from backend
+    nextJumpInMilliseconds: number | null;
+    nextJumperId?: string | null; // Helper property
 }
 
-export type CompetitionStatus = "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended";
+export interface EndedCompetitionResults {
+    results: CompetitionResultDto[];
+}
 
 export interface StartlistJumperDto {
     bib: number;
@@ -103,8 +126,8 @@ export interface CompetitionResultDto {
 }
 
 export interface CompetitionRoundResultDto {
-    gameJumperId: string; // NEW: Game jumper ID
-    competitionJumperId: string; // NEW: Competition jumper ID
+    gameJumperId: string;
+    competitionJumperId: string;
     distance: number;
     points: number;
     judges?: number[] | null;
@@ -123,18 +146,30 @@ export interface CompetitionJumperDto {
     countryFisCode: string;
 }
 
-export interface GateDto {
+export interface GateStateDto {
     starting: number;
     currentJury: number;
     coachReduction: number | null;
 }
 
-// ───────── PreDraft ─────────
-export interface PreDraftDto {
-    mode: "Waiting" | "Running";
-    index: number; // 0-based session index
-    competition: CompetitionDto | null;
+// ───────── Break / Ended ─────────
+
+export interface BreakDto {
+    next: "PreDraft" | "Draft" | "MainCompetition" | "Ended";
+    draftOrderPolicy?: "Classic" | "Snake" | "Random";
 }
+
+export interface EndedDto {
+    policy: "Classic" | "PodiumAtAllCosts";
+    ranking: Record<string, PositionAndPoints>; // position, points
+}
+
+export interface PositionAndPoints {
+    position: number;
+    points: number;
+}
+
+// ───────── Utility Types ─────────
 
 export interface StartlistEntryDto {
     bib: number;
@@ -144,36 +179,34 @@ export interface StartlistEntryDto {
     countryFisCode: string;
 }
 
-export interface PlayerWithBotFlagDto extends PlayerDto {
+export interface PlayerWithBotFlagDto {
+    playerId: string;
+    nick: string;
     isBot: boolean;
 }
 
-export interface JumperDetailsDto extends CompetitionJumperDto {
-    photoUrl?: string;
-    lastJumpResult?: CompetitionRoundResultDto;
+export interface JumperDetailsDto {
+    gameJumperId: string;
+    competitionJumperId: string;
+    name: string;
+    surname: string;
+    countryFisCode: string;
+    photoUrl: string;
+    lastJumpResult: CompetitionRoundResultDto;
     currentPosition?: number;
     gatePoints?: number;
     windPoints?: number;
     totalCompensation?: number;
-    totalScore?: number;
+    totalScore: number;
 }
 
 export interface PreDraftSessionDto {
     sessionNumber: number;
     results: CompetitionResultDto[];
     isActive: boolean;
-    nextJumpInSeconds?: number;
+    nextJumpInMilliseconds?: number;
 }
 
-// ───────── Break ─────────
-export interface BreakDto {
-    type: string;
-    durationInSeconds: number;
-    remainingInSeconds: number;
-}
-
-// ───────── Ended ─────────
-export interface EndedDto {
-    finalResults: CompetitionResultDto[];
-    winner: CompetitionJumperDto;
-}
+// Typy pomocnicze, które mogą być przestarzałe
+export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "Break" | "Break Draft" | "Break MainCompetition";
+export type CompetitionStatus = "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended";
