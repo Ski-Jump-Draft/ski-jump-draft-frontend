@@ -5,7 +5,7 @@
 
 ## Overview
 This is the **React/TypeScript frontend** for Ski Jump Draft, an online draft game about ski jumping.  
-Built with **Vite** + **shadcn/ui** + **Tailwind**.
+Built with **Next** + **shadcn/ui** + **Tailwind**.
 
 ## Quickstart
 1. Clone: `git clone https://github.com/sj-draft/frontend`
@@ -14,7 +14,7 @@ Built with **Vite** + **shadcn/ui** + **Tailwind**.
 
 ## Stack
 - ⚛️ React + TypeScript
-- ⚡ Vite
+- ⚡ Next
 - 🎨 Tailwind CSS + [shadcn/ui](https://ui.shadcn.com) + [lucide-react](https://lucide.dev)
 
 ## Configuration
