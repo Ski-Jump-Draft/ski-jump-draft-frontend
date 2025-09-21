@@ -100,6 +100,7 @@ export interface PlayerPicksDto {
 
 export interface CompetitionDto {
     status: CompetitionStatus; // "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended"
+    roundIndex: number | null;
     startlist: StartlistJumperDto[];
     gateState: GateStateDto;
     results: CompetitionResultDto[];
@@ -208,5 +209,5 @@ export interface PreDraftSessionDto {
 }
 
 // Typy pomocnicze, które mogą być przestarzałe
-export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "Break" | "Break Draft" | "Break MainCompetition";
+export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "Break" | "Break Draft" | "Break MainCompetition" | "Break Ended";
 export type CompetitionStatus = "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended";

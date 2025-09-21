@@ -27,6 +27,8 @@ import { GameUpdatedDto, GameStatus } from "@/types/game";
 import { Toaster, toast } from 'sonner';
 import { GameEndedDemo } from "@/components/GameEndedDemo";
 import { GameEndedScreen } from "@/components/GameEndedScreen";
+import { MainCompetitionScreen } from "@/components/main-competition/MainCompetitionScreen";
+import { MainCompetitionDemo } from "@/components/main-competition/MainCompetitionDemo";
 
 /* ───────────────────────────────────────────── */
 
@@ -57,10 +59,15 @@ export default function HomePage() {
   const [waitingForGameStart, setWaitingForGameStart] = useState(false);
 
   /* ekrany */
-  const [screen, setScreen] = useState<"none" | "transition1" | "hill" | "transition2" | "predraft" | "draft" | "competition" | "ended">("none");
+  const [screen, setScreen] = useState<'none' | 'transition1' | 'hill' | 'transition2' | 'predraft' | 'draft' | 'ended' | 'main-competition'>('none');
   const [isDemo, setIsDemo] = useState(false);
   const [preDraftEndedAt, setPreDraftEndedAt] = useState<number | null>(null);
-  // const [shouldConnectToGameHub, setShouldConnectToGameHub] = useState(false); // REMOVED
+  const [showDraftDemo, setShowDraftDemo] = useState(false);
+  const [showDraftBreakDemo, setShowDraftBreakDemo] = useState(false);
+  const [showPreDraftDemo, setShowPreDraftDemo] = useState(false);
+  const [showGameEndedDemo, setShowGameEndedDemo] = useState(false);
+  const [showMainCompetitionDemo, setShowMainCompetitionDemo] = useState(false);
+  const [myDraftedJumperIds, setMyDraftedJumperIds] = useState<string[]>([]);
 
   // Helper: support backend ranking serialized as { Position, Points }
   const readRankingTuple = (value: unknown): [number, number] => {
@@ -76,6 +83,16 @@ export default function HomePage() {
     }
     return [0, 0];
   };
+
+  // Persist my draft picks when draft data is available
+  useEffect(() => {
+    if (gameData?.draft?.picks && playerId) {
+      const myPicks = gameData.draft.picks.find(p => p.playerId === playerId)?.jumperIds;
+      if (myPicks) {
+        setMyDraftedJumperIds(myPicks);
+      }
+    }
+  }, [gameData?.draft?.picks, playerId]);
 
   // Handle 5-second countdown after pre-draft ends
   useEffect(() => {
@@ -108,12 +125,7 @@ export default function HomePage() {
             setScreen("predraft");
             break;
           case "MainCompetition":
-            // If draft is not null, show draft results instead of resetting to competition screen
-            if (gameData.draft !== null) {
-              setScreen("draft");
-            } else {
-              setScreen("competition");
-            }
+            setScreen("main-competition");
             break;
           case "Ended":
             setScreen("ended");
@@ -180,7 +192,7 @@ export default function HomePage() {
           // First, check for `nextStatus` to handle timed transitions
           // If we have nextStatus, stay on transition screen and let timer handle the switch
           // But if nextStatus.status is the same as current status, we're already in the right phase
-          if (ev.data.nextStatus && ev.data.nextStatus.status !== ev.data.status) {
+          if (ev.data.nextStatus && ev.data.nextStatus.status !== ev.data.status && ev.data.status !== 'Break Ended') {
             // Don't change screen yet - let the timer handle it
             setScreen("transition1");
           } else {
@@ -209,15 +221,16 @@ export default function HomePage() {
                 break;
               case "MainCompetition":
               case "Break MainCompetition":
-                // If draft is finished, show draft results with live main competition data
-                if (ev.data.draft?.ended) {
-                  setScreen("draft");
-                } else {
-                  setScreen("competition");
-                }
+                setScreen("main-competition");
+                break;
+              case "Break Ended":
+                setScreen("main-competition"); // Stay on main competition screen
                 break;
               case "Ended":
                 setScreen("ended");
+                // Gracefully disconnect from SignalR
+                abortedByUserRef.current = true;
+                // No need for hardReset() here, as changing matchmakingId to null in useGameHubStream will trigger disconnection
                 break;
               case "Break":
                 // Generic break - check next status
@@ -226,7 +239,7 @@ export default function HomePage() {
                 } else if (ev.data.nextStatus?.status === "Draft") {
                   setScreen("draft");
                 } else if (ev.data.nextStatus?.status === "MainCompetition") {
-                  setScreen("competition");
+                  setScreen("main-competition");
                 }
                 break;
               default:
@@ -252,6 +265,8 @@ export default function HomePage() {
 
         case "gameEnded":
           setScreen("ended");
+          // Gracefully disconnect from SignalR
+          abortedByUserRef.current = true;
           break;
 
         case "gameStartedAfterMatchmaking":
@@ -356,6 +371,7 @@ export default function HomePage() {
     setScreen("none");
     setIsDemo(false);
     setPreDraftEndedAt(null);
+    setMyDraftedJumperIds([]);
     // setShouldConnectToGameHub(false); // REMOVED
   };
 
@@ -384,48 +400,60 @@ export default function HomePage() {
         </div>
 
         {/* Demo button */}
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsDemo(true);
-              setScreen("predraft");
-            }}
-            className="text-white border-white/30 hover:bg-white/10"
-          >
-            Demo: PreDraft Screen
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsDemo(true);
-              setScreen("draft");
-            }}
-            className="text-white border-white/30 hover:bg-white/10"
-          >
-            Demo: Draft Screen
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsDemo(true);
-              setScreen("competition");
-            }}
-            className="text-white border-white/30 hover:bg-white/10"
-          >
-            Demo: Draft Break
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsDemo(true);
-              setScreen("ended");
-            }}
-            className="text-white border-white/30 hover:bg-white/10"
-          >
-            Demo: Wyniki końcowe
-          </Button>
-        </div>
+        {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDemo(true);
+                setScreen("predraft");
+              }}
+              className="text-white border-white/30 hover:bg-white/10"
+            >
+              Demo: PreDraft Screen
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDemo(true);
+                setScreen("draft");
+              }}
+              className="text-white border-white/30 hover:bg-white/10"
+            >
+              Demo: Draft Screen
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDemo(true);
+                setScreen("draft"); // DraftBreakDemo now shown in draft screen with isReadOnly
+              }}
+              className="text-white border-white/30 hover:bg-white/10"
+            >
+              Demo: Draft Break
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDemo(true);
+                setScreen("ended");
+              }}
+              className="text-white border-white/30 hover:bg-white/10"
+            >
+              Demo: Wyniki końcowe
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDemo(true);
+                setScreen("main-competition");
+              }}
+              className="text-white border-white/30 hover:bg-white/10"
+            >
+              Demo: Main Competition
+            </Button>
+          </div>
+        )}
 
         {/* Error display */}
         {joinError && (
@@ -527,22 +555,6 @@ export default function HomePage() {
         ) : null
       )}
 
-      {screen === "competition" && (
-        isDemo ? (
-          <DraftBreakDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
-        ) : gameData ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950">
-            <div className="text-center text-white">
-              <h2 className="text-4xl font-bold mb-4">Main Competition</h2>
-              <p>Status: {gameData.mainCompetition?.status}</p>
-              {gameData.mainCompetition?.nextJumperId && (
-                <p>Next jumper to jump</p>
-              )}
-            </div>
-          </div>
-        ) : null
-      )}
-
       {screen === "ended" && (
         isDemo ? (
           <div className="fixed inset-0 z-50">
@@ -574,6 +586,21 @@ export default function HomePage() {
             })()}
           </div>
         )
+      )}
+
+      {screen === "main-competition" && (
+        isDemo ? (
+          <MainCompetitionDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+        ) : gameData ? (
+          <div className="fixed inset-0 z-50">
+            <MainCompetitionScreen
+              gameData={gameData}
+              myPlayerId={playerId!}
+              myDraftedJumperIds={myDraftedJumperIds}
+              isEnded={gameData.status === 'Break Ended' || gameData.status === 'Ended'}
+            />
+          </div>
+        ) : null
       )}
     </main>
   );

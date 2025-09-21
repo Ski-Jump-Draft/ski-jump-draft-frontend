@@ -1,0 +1,116 @@
+'use client';
+
+import { MainCompetitionScreen } from './MainCompetitionScreen';
+import { GameUpdatedDto } from '@/types/game';
+
+export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
+    const mockGameData: GameUpdatedDto = {
+        gameId: "a3f4e1b2-c3d4-e5f6-a7b8-c9d0e1f2a3b4",
+        schemaVersion: 1,
+        status: "MainCompetition",
+        nextStatus: null,
+        changeType: "Snapshot",
+        preDraftsCount: 2,
+        header: {
+            draftOrderPolicy: "Classic",
+            draftTimeoutInSeconds: 30,
+            hill: {
+                gameHillId: "hill1",
+                gameWorldHillId: "whill1",
+                name: "Wielka Krokiew",
+                location: "Zakopane",
+                k: 125,
+                hs: 140,
+                countryFisCode: "POL",
+                alpha2Code: "PL"
+            },
+            players: [
+                { playerId: "player1", nick: "Kamil Stoch Fan", isBot: false },
+                { playerId: "player2", nick: "Halvor Enjoyer", isBot: false },
+                { playerId: "player3", nick: "Bot Adam", isBot: true },
+                { playerId: "player4", nick: "Bot Piotr", isBot: true },
+            ],
+            jumpers: [], // Not essential for this screen's UI logic directly
+            competitionJumpers: Array.from({ length: 50 }, (_, i) => ({
+                gameJumperId: `j${i + 1}`,
+                competitionJumperId: `cj${i + 1}`,
+                name: `Jumper`,
+                surname: `#${i + 1}`,
+                countryFisCode: ["POL", "NOR", "GER", "AUT", "SLO", "JPN"][i % 6],
+            })),
+        },
+        preDraft: null,
+        endedPreDraft: null,
+        draft: {
+            currentPlayerId: null,
+            timeoutInSeconds: 0,
+            ended: true,
+            orderPolicy: "Classic",
+            picks: [
+                { playerId: "player1", jumperIds: ["j1", "j3", "j5", "j7", "j9"] },
+                { playerId: "player2", jumperIds: ["j2", "j4", "j6", "j8", "j10"] },
+                { playerId: "player3", jumperIds: ["j11", "j13", "j15", "j17", "j19"] },
+                { playerId: "player4", jumperIds: ["j12", "j14", "j16", "j18", "j20"] },
+            ],
+            availableJumpers: [],
+            nextPlayers: [],
+        },
+        mainCompetition: {
+            status: "RoundInProgress",
+            startlist: Array.from({ length: 50 }, (_, i) => ({
+                bib: 50 - i,
+                done: i >= 20, // First 20 jumpers have jumped
+                competitionJumperId: `cj${50 - i}`,
+            })),
+            gateState: {
+                starting: 10,
+                currentJury: 10,
+                coachReduction: null
+            },
+            results: Array.from({ length: 20 }, (_, i) => ({
+                rank: i + 1,
+                bib: 50 - i,
+                competitionJumperId: `cj${50 - i}`,
+                total: 140 - i * 1.5,
+                rounds: [{
+                    gameJumperId: `j${50 - i}`,
+                    competitionJumperId: `cj${50 - i}`,
+                    distance: 130 - i * 2,
+                    points: 140 - i * 1.5,
+                    judges: [18.5, 18.0, 18.5, 18.5, 19.0],
+                    judgePoints: 55.5,
+                    windCompensation: 2.1,
+                    windAverage: -0.5,
+                    gateCompensation: 0,
+                    totalCompensation: 2.1
+                }]
+            })),
+            nextJumpInMilliseconds: 4500,
+            nextJumperId: "cj30",
+        },
+        break: null,
+        ended: null,
+        lastCompetitionState: null, // Simplified for demo
+        lastCompetitionResultDto: {
+            gameJumperId: 'j31',
+            competitionJumperId: 'cj31',
+            distance: 128.5,
+            points: 135.2,
+            judges: [18.0, 18.5, 18.0, 18.5, 18.0],
+            judgePoints: 54.5,
+            windCompensation: 1.2,
+            windAverage: -0.3,
+            gateCompensation: 0.0,
+            totalCompensation: 1.2,
+        },
+    };
+
+    return (
+        <MainCompetitionScreen
+            gameData={mockGameData}
+            myPlayerId="player1"
+            myDraftedJumperIds={["j1", "j3", "j5", "j7", "j9"]}
+            onBack={onBack}
+        />
+    );
+}

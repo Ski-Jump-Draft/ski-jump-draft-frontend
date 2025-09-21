@@ -83,11 +83,11 @@ export const CompetitionResultsTable = ({
                                 <div
                                     key={result.competitionJumperId}
                                     className={`grid grid-cols-[auto_1fr_auto] items-center gap-x-4 px-4 py-3 border-b border-neutral-700/50 transition-all duration-300
-                  ${myPick ? 'bg-green-600/20 border border-green-500/40' :
-                                            othersPick ? 'bg-yellow-100/20 border border-yellow-500/40' :
-                                                isDrafted ? 'bg-gray-600/20 border border-gray-500/40' : ''}
+                  ${myPick ? 'bg-purple-600/20' :
+                                            othersPick ? 'bg-yellow-100/20' :
+                                                isDrafted ? 'bg-gray-600/20' : ''}
                   ${canInteract ? 'cursor-pointer hover:bg-neutral-700/50' : 'cursor-not-allowed'}
-                  ${isSelected ? 'bg-purple-600/20 ring-2 ring-purple-500' : ''}
+                  ${isSelected ? 'bg-purple-600/30 ring-2 ring-purple-500' : ''}
                 `}
                                     onClick={() => canInteract && onJumperSelect(jumper?.gameJumperId || '')}
                                     onDoubleClick={() => canInteract && onJumperPick(jumper?.gameJumperId || '')}
@@ -101,7 +101,7 @@ export const CompetitionResultsTable = ({
                                         />
                                         <span className="font-medium">{jumper ? `${jumper.name} ${jumper.surname}` : 'Unknown Jumper'}</span>
                                         {isDrafted && (
-                                            <Check className="w-4 h-4 text-green-400 ml-auto" />
+                                            <Check className="w-4 h-4 text-purple-400 ml-auto" />
                                         )}
                                     </div>
                                     <div className="text-right font-semibold text-lg">{result.total.toFixed(1)}</div>
