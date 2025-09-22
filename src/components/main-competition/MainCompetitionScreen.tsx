@@ -6,8 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { fisToAlpha2 } from '@/utils/countryCodes';
-import { Bot, User, Clock, Flag, Trophy } from 'lucide-react';
+import { Bot, User, Clock, Flag, Trophy, Info } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 interface MainCompetitionScreenProps {
@@ -26,6 +27,7 @@ export function MainCompetitionScreen({
     onBack
 }: MainCompetitionScreenProps) {
     const [lastHighlightedJumper, setLastHighlightedJumper] = useState<string | null>(null);
+    const [scoringDialogOpen, setScoringDialogOpen] = useState(false);
 
     const competition = gameData.mainCompetition ?? gameData.lastCompetitionState;
     const players = gameData.header.players;
@@ -89,6 +91,32 @@ export function MainCompetitionScreen({
         ? competition?.results.find(r => r.competitionJumperId === lastJumpResult.competitionJumperId)?.rank
         : null;
 
+    // Scoring rules logic (copied from GameEndedScreen)
+    const policy = gameData.ended?.policy || "Classic";
+    const policyLines = policy === "Classic"
+        ? [
+            "1 miejsce --> 10 punktów",
+            "2 miejsce --> 9 punktów",
+            "3 miejsce --> 8 punktów",
+            "4 miejsce --> 7 punktów",
+            "5 miejsce --> 6 punktów",
+            "6-10 miejsce --> 5 punktów",
+            "11-20 miejsce --> 3 punkty",
+            "21-30 miejsce --> 1 punkt",
+        ]
+        : [
+            "1 miejsce --> 15 punktów",
+            "2 miejsce --> 15 punktów",
+            "3 miejsce --> 15 punktów",
+            "4-10 miejsce --> 5 punktów",
+            "11-20 miejsce --> 2 punkty",
+            "21-30 miejsce --> 1 punkt",
+        ];
+
+    const policySummary = policy === "Classic"
+        ? "Punkty są liczone systemem klasycznym, który jest dość zrównoważony"
+        : "Punkty są liczone systemem, który szczególnie nagradza miejsca na podium";
+
 
     return (
         <div className={cn("min-h-screen bg-background p-4 lg:p-6 flex flex-col")}>
@@ -106,6 +134,9 @@ export function MainCompetitionScreen({
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
+                    <Button variant="outline" size="sm" onClick={() => setScoringDialogOpen(true)}>
+                        <Info className="w-4 h-4 mr-2" /> Jak liczone są punkty?
+                    </Button>
                     {gameData.status !== 'MainCompetition' && gameData.nextStatus ? (
                         <SimplePhaseTimer
                             label={gameData.nextStatus.status === 'Ended' ? "Wyniki za" : "Wyniki za"}
@@ -397,6 +428,21 @@ export function MainCompetitionScreen({
                     {onBack && <Button onClick={onBack} className="mt-4">Back to Menu</Button>}
                 </div>
             </div>
+
+            <Dialog open={scoringDialogOpen} onOpenChange={setScoringDialogOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Jak liczone są punkty?</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-neutral-300">Gracze zdobywają punkty za miejsca swoich zawodników w konkursie.</p>
+                        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+                            <pre className="whitespace-pre-wrap text-sm leading-6">{policyLines.join("\n")}</pre>
+                        </div>
+                        <p className="text-sm text-neutral-400">{policySummary}</p>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
