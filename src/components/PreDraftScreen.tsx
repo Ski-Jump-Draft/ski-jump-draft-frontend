@@ -55,7 +55,8 @@ export function PreDraftScreen({
     // But don't gray out if it's just a break between PreDraft competitions
     const isCompetitionEnded = (gameData.lastCompetitionState?.status === "Ended" ||
         (gameData.lastCompetitionState?.startlist?.every(jumper => jumper.done) ?? false)) &&
-        gameData.nextStatus?.status !== "PreDraftNextCompetition";
+        gameData.nextStatus?.status !== "PreDraft" &&
+        gameData.status !== "Break PreDraft";
 
     useEffect(() => {
         // Reset countdown when backend provides a new timer or a new jump cycle starts
@@ -132,9 +133,9 @@ export function PreDraftScreen({
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
-                    {isBreak && nextStatus ? (
+                    {(isBreak || gameData.status === "Break PreDraft") && nextStatus ? (
                         <SimplePhaseTimer
-                            label="Draft"
+                            label={gameData.status === "Break PreDraft" || nextStatus.status === "PreDraftNextCompetition" ? "Następna sesja" : "Draft"}
                             timeSpan={nextStatus.in}
                             subtractSeconds={0}
                             initialSeconds={isPreDraftEnded ? 5 : undefined}
@@ -152,7 +153,7 @@ export function PreDraftScreen({
                 {/* Left Sidebar - Start List & Players */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col h-full">
                     {/* Start List - 3/5 of height */}
-                    <Card className={`p-3 lg:p-4 flex flex-col ${isCompetitionEnded ? 'opacity-50' : ''}`} style={{ height: '60%', maxHeight: '60vh' }}>
+                    <Card className={`p-3 lg:p-4 flex flex-col ${isCompetitionEnded || gameData.status === "Break PreDraft" ? 'opacity-50' : ''}`} style={{ height: '60%', maxHeight: '60vh' }}>
                         <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Lista startowa</h3>
                         <div className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto">
                             {startlist.map((entry, index) => {
@@ -280,10 +281,10 @@ export function PreDraftScreen({
                 {/* Right Sidebar - Countdown & Jumper Details */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col">
                     {/* Next Jump Countdown */}
-                    <Card className={`p-3 lg:p-4 flex-shrink-0 ${isCompetitionEnded ? 'opacity-50' : ''}`}>
+                    <Card className={`p-3 lg:p-4 flex-shrink-0 ${isCompetitionEnded || gameData.status === "Break PreDraft" ? 'opacity-50' : ''}`}>
                         <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex items-center gap-2">
                             <span>Następny skok:</span>
-                            {nextJumperDisplay && !isCompetitionEnded && (
+                            {nextJumperDisplay && !isCompetitionEnded && gameData.status !== "Break PreDraft" && (
                                 <>
                                     <img
                                         src={getCountryFlag(nextJumperDisplay.countryFisCode)}
@@ -295,11 +296,13 @@ export function PreDraftScreen({
                                     </span>
                                 </>
                             )}
-                            {isCompetitionEnded && (
-                                <span className="text-muted-foreground">Konkurs zakończony</span>
+                            {(isCompetitionEnded || gameData.status === "Break PreDraft") && (
+                                <span className="text-muted-foreground">
+                                    {gameData.status === "Break PreDraft" ? "Przerwa między sesjami" : "Konkurs zakończony"}
+                                </span>
                             )}
                         </h3>
-                        {!isCompetitionEnded && (
+                        {!isCompetitionEnded && gameData.status !== "Break PreDraft" && (
                             <div className="relative bg-muted rounded-lg overflow-hidden">
                                 <div
                                     key={`progress-${gameData?.lastCompetitionResultDto?.competitionJumperId || 'initial'}`}

@@ -209,5 +209,5 @@ export interface PreDraftSessionDto {
 }
 
 // Typy pomocnicze, które mogą być przestarzałe
-export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "Break" | "Break Draft" | "Break MainCompetition" | "Break Ended";
+export type GameStatus = "PreDraft" | "Draft" | "MainCompetition" | "Ended" | "Break" | "Break Draft" | "Break MainCompetition" | "Break Ended" | "Break PreDraft";
 export type CompetitionStatus = "NotStarted" | "RoundInProgress" | "Suspended" | "Cancelled" | "Ended";

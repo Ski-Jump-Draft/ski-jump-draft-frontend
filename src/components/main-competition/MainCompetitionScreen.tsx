@@ -312,7 +312,7 @@ export function MainCompetitionScreen({
                         <div className={`relative`}>
                             <Card key={lastJumpResult.competitionJumperId + String(lastJumpResult.points)} className={cn(
                                 "p-3 lg:p-4 flex-shrink-0 animate-card-reveal reveal-shader-top",
-                                myPicks.includes(lastJumperDetails.gameJumperId) && "bg-purple-600/10"
+                                myPicks.includes(lastJumperDetails.gameJumperId) && "bg-purple-600/20 border-2 border-purple-500/50 shadow-lg shadow-purple-500/25"
                             )}>
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3">

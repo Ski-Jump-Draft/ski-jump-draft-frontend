@@ -192,7 +192,7 @@ export default function HomePage() {
           // First, check for `nextStatus` to handle timed transitions
           // If we have nextStatus, stay on transition screen and let timer handle the switch
           // But if nextStatus.status is the same as current status, we're already in the right phase
-          if (ev.data.nextStatus && ev.data.nextStatus.status !== ev.data.status && ev.data.status !== 'Break Ended') {
+          if (ev.data.nextStatus && ev.data.nextStatus.status !== ev.data.status && ev.data.status !== 'Break Ended' && ev.data.status !== 'Break PreDraft' && ev.data.nextStatus.status !== 'PreDraftNextCompetition') {
             // Don't change screen yet - let the timer handle it
             setScreen("transition1");
           } else {
@@ -231,6 +231,10 @@ export default function HomePage() {
                 // Gracefully disconnect from SignalR
                 abortedByUserRef.current = true;
                 // No need for hardReset() here, as changing matchmakingId to null in useGameHubStream will trigger disconnection
+                break;
+              case "Break PreDraft":
+                // Stay on predraft screen during break between pre-draft competitions
+                setScreen("predraft");
                 break;
               case "Break":
                 // Generic break - check next status
