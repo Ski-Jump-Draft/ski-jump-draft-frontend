@@ -382,110 +382,162 @@ export default function HomePage() {
   /* ── UI ── */
   return (
     <main className="relative flex h-screen w-screen items-center justify-center overflow-hidden font-sans">
-      {/* bg */}
-      <div className="absolute inset-0 -z-10 bg-cover bg-center opacity-100 dark:opacity-30"
-        style={{ backgroundImage: "url('/assets/predazzo_4k.jpeg')" }} />
+      {/* Animated background with gradient overlay */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/assets/predazzo_4k.jpeg')" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/75 via-slate-800/90 to-slate-900/95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+      </div>
 
-      {/* karta startowa */}
-      <div className="flex flex-col items-center gap-8 rounded-3xl border border-white/20
-                      bg-gray-800/100 dark:bg-stone-900/100 p-10 shadow-xl backdrop-blur-md">
-        <h1 className="font-heading text-5xl font-bold text-white">Ski Jump Draft</h1>
-        <p className="text-center text-white/80 max-w-md">
-          Obserwuj skoki zawodników i skompletuj najlepszy skład ze wszystkich! Rozgrywka trwa około 15 minut.
-        </p>
+      {/* Floating particles effect */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`
+            }}
+          />
+        ))}
+      </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Input placeholder={placeholder} value={nick}
-            onChange={e => setNick(e.target.value)}
-            disabled={busy || status !== "idle"} />
-          <Button disabled={busy || status !== "idle"} onClick={submit}>
-            {busy ? "Łączenie…" : "Zagraj"}
-          </Button>
+      {/* Main content container */}
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+        {/* Hero section */}
+        <div className="text-center mb-12">
+          {/* Logo */}
+          {/* <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-2xl shadow-blue-500/25 p-2">
+            <img
+              src="/sjdraft.webp"
+              alt="SJ Draft Logo"
+              className="w-full h-full object-contain"
+            />
+          </div> */}
+
+          {/* Title with gradient */}
+          <h1 className="text-6xl lg:text-7xl font-black mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent leading-tight">
+            Ski Jump Draft
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-xl text-slate-300 max-w-xl mx-auto leading-relaxed">
+            Obserwuj skoki zawodników i skompletuj najlepszy skład ze wszystkich!
+          </p>
+
+          {/* Duration badge */}
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-slate-300">Rozgrywka trwa około 15 minut</span>
+          </div>
         </div>
 
-        {/* Demo button */}
-        {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDemo(true);
-                setScreen("predraft");
-              }}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              Demo: PreDraft Screen
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDemo(true);
-                setScreen("draft");
-              }}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              Demo: Draft Screen
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDemo(true);
-                setScreen("draft"); // DraftBreakDemo now shown in draft screen with isReadOnly
-              }}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              Demo: Draft Break
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDemo(true);
-                setScreen("ended");
-              }}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              Demo: Wyniki końcowe
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDemo(true);
-                setScreen("main-competition");
-              }}
-              className="text-white border-white/30 hover:bg-white/10"
-            >
-              Demo: Main Competition
-            </Button>
-          </div>
-        )}
-
-        {/* Error display */}
-        {joinError && (
-          <div className="mt-4 p-4 rounded-lg border border-red-500/50 bg-red-500/10 backdrop-blur-sm max-w-md">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">!</span>
+        {/* Game entry form */}
+        <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
+          <div className="space-y-6">
+            {/* Input section */}
+            <div className="space-y-4">
+              <label className="block text-sm font-semibold text-slate-300 mb-2">
+                Wybierz swój pseudonim
+              </label>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder={placeholder}
+                    value={nick}
+                    onChange={e => setNick(e.target.value)}
+                    disabled={busy || status !== "idle"}
+                    className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder:text-slate-400"
+                  />
+                </div>
+                <Button
+                  disabled={busy || status !== "idle"}
+                  onClick={submit}
+                  className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 transform hover:scale-105"
+                >
+                  {busy ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Łączenie…
+                    </div>
+                  ) : (
+                    "Zagraj"
+                  )}
+                </Button>
               </div>
-              <div className="flex-1">
-                <h3 className="text-red-400 font-semibold text-sm mb-1">
-                  {joinError.error === 'MultipleGamesNotSupported' && 'Gra już trwa'}
-                  {joinError.error === 'AlreadyJoined' && 'Już dołączyłeś'}
-                  {joinError.error === 'RoomIsFull' && 'Pokój pełny'}
-                  {joinError.error === 'ServerError' && 'Błąd serwera'}
-                </h3>
-                <p className="text-red-300 text-sm">{joinError.message}</p>
-              </div>
-              <button
-                onClick={() => setJoinError(null)}
-                className="flex-shrink-0 text-red-400 hover:text-red-300 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
+
+            {/* Demo buttons */}
+            {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
+              <div className="pt-6 border-t border-slate-700/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-400">Tryb deweloperski</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "PreDraft", screen: "predraft" },
+                    { label: "Draft", screen: "draft" },
+                    { label: "Draft Break", screen: "draft" },
+                    { label: "Wyniki", screen: "ended" },
+                    { label: "Konkurs", screen: "main-competition" }
+                  ].map((demo) => (
+                    <Button
+                      key={demo.screen + demo.label}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsDemo(true);
+                        setScreen(demo.screen as any);
+                      }}
+                      className="text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500/50 rounded-lg transition-all duration-200"
+                    >
+                      {demo.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Error display */}
+            {joinError && (
+              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 backdrop-blur-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-red-400 font-semibold text-sm mb-1">
+                      {joinError.error === 'MultipleGamesNotSupported' && 'Gra już trwa'}
+                      {joinError.error === 'AlreadyJoined' && 'Już dołączyłeś'}
+                      {joinError.error === 'RoomIsFull' && 'Pokój pełny'}
+                      {joinError.error === 'ServerError' && 'Błąd serwera'}
+                    </h3>
+                    <p className="text-red-300/80 text-sm leading-relaxed">{joinError.message}</p>
+                  </div>
+                  <button
+                    onClick={() => setJoinError(null)}
+                    className="flex-shrink-0 text-red-400/60 hover:text-red-300 transition-colors p-1 rounded-lg hover:bg-red-500/10"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         <MatchmakingDialog
           open={dialogOpen}
