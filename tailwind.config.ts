@@ -16,6 +16,15 @@ const config: Config = {
                 sans: ['var(--font-sans)', 'sans-serif'],
                 heading: ['var(--font-heading)', 'sans-serif'],
             },
+            animation: {
+                'fall': 'fall 8s linear infinite',
+            },
+            keyframes: {
+                fall: {
+                    '0%': { transform: 'translateY(-100vh)' },
+                    '100%': { transform: 'translateY(100vh)' },
+                },
+            },
         },
     },
     plugins: [

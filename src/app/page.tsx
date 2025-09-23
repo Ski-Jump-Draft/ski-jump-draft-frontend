@@ -39,6 +39,10 @@ export default function HomePage() {
   const [placeholder, setPlaceholder] = useState("");
   useEffect(() => setPlaceholder(generateNickname()), []);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   /* matchmaking */
   const [matchmakingId, setMatchmakingId] = useState<string | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
@@ -68,6 +72,7 @@ export default function HomePage() {
   const [showGameEndedDemo, setShowGameEndedDemo] = useState(false);
   const [showMainCompetitionDemo, setShowMainCompetitionDemo] = useState(false);
   const [myDraftedJumperIds, setMyDraftedJumperIds] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   // Helper: support backend ranking serialized as { Position, Points }
   const readRankingTuple = (value: unknown): [number, number] => {
@@ -390,28 +395,43 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
 
-      {/* Floating particles effect */}
+      {/* Falling snow effect */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`
-            }}
-          />
-        ))}
+        {isClient && [...Array(60)].map((_, i) => {
+          const size = 12 + Math.random() * 8; // 12-20px
+          return (
+            <div
+              key={i}
+              className="absolute text-white"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `-30px`,
+                animation: `fall ${12 + Math.random() * 18}s linear infinite`,
+                animationDelay: `${Math.random() * 20}s`,
+                opacity: 0.7 + Math.random() * 0.3,
+              }}
+            >
+              <svg
+                width={size}
+                height={size}
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="drop-shadow-lg"
+              >
+                <path d="M12 2L13.09 8.26L19 7L14.74 13.09L22 12L15.74 14.91L21 17L14.91 18.74L20 22L12 19L11 22L9.09 15.74L3 17L7.26 10.91L0 12L6.26 9.09L1 7L7.09 5.26L2 2L10 5L11 2L12 2Z" />
+              </svg>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Main content container */}
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
-        {/* Hero section */}
-        <div className="text-center mb-12">
-          {/* Logo */}
-          {/* <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-2xl shadow-blue-500/25 p-2">
+      {/* Main content container - only show when screen is "none" */}
+      {screen === "none" && (
+        <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+          {/* Hero section */}
+          <div className="text-center mb-12">
+            {/* Logo */}
+            {/* <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-2xl shadow-blue-500/25 p-2">
             <img
               src="/sjdraft.webp"
               alt="SJ Draft Logo"
@@ -419,137 +439,138 @@ export default function HomePage() {
             />
           </div> */}
 
-          {/* Title with gradient */}
-          <h1 className="text-6xl lg:text-7xl font-black mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent leading-tight">
-            Ski Jump Draft
-          </h1>
+            {/* Title with gradient */}
+            <h1 className="text-6xl lg:text-7xl font-black mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent leading-tight">
+              Ski Jump Draft
+            </h1>
 
-          {/* Subtitle */}
-          <p className="text-xl text-slate-300 max-w-xl mx-auto leading-relaxed">
-            Obserwuj skoki zawodników i skompletuj najlepszy skład ze wszystkich!
-          </p>
+            {/* Subtitle */}
+            <p className="text-xl text-slate-300 max-w-xl mx-auto leading-relaxed">
+              Obserwuj skoki zawodników i skompletuj najlepszy skład ze wszystkich!
+            </p>
 
-          {/* Duration badge */}
-          <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
-            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm text-slate-300">Rozgrywka trwa około 15 minut</span>
-          </div>
-        </div>
-
-        {/* Game entry form */}
-        <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
-          <div className="space-y-6">
-            {/* Input section */}
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-slate-300 mb-2">
-                Wybierz swój pseudonim
-              </label>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder={placeholder}
-                    value={nick}
-                    onChange={e => setNick(e.target.value)}
-                    disabled={busy || status !== "idle"}
-                    className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder:text-slate-400"
-                  />
-                </div>
-                <Button
-                  disabled={busy || status !== "idle"}
-                  onClick={submit}
-                  className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 transform hover:scale-105"
-                >
-                  {busy ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Łączenie…
-                    </div>
-                  ) : (
-                    "Zagraj"
-                  )}
-                </Button>
-              </div>
+            {/* Duration badge */}
+            <div className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+              <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm text-slate-300">Rozgrywka trwa około 15 minut</span>
             </div>
-
-            {/* Demo buttons */}
-            {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
-              <div className="pt-6 border-t border-slate-700/50">
-                <div className="flex items-center gap-2 mb-4">
-                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  <span className="text-sm font-medium text-slate-400">Tryb deweloperski</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {[
-                    { label: "PreDraft", screen: "predraft" },
-                    { label: "Draft", screen: "draft" },
-                    { label: "Draft Break", screen: "draft" },
-                    { label: "Wyniki", screen: "ended" },
-                    { label: "Konkurs", screen: "main-competition" }
-                  ].map((demo) => (
-                    <Button
-                      key={demo.screen + demo.label}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setIsDemo(true);
-                        setScreen(demo.screen as any);
-                      }}
-                      className="text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500/50 rounded-lg transition-all duration-200"
-                    >
-                      {demo.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Error display */}
-            {joinError && (
-              <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 backdrop-blur-sm">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-red-400 font-semibold text-sm mb-1">
-                      {joinError.error === 'MultipleGamesNotSupported' && 'Gra już trwa'}
-                      {joinError.error === 'AlreadyJoined' && 'Już dołączyłeś'}
-                      {joinError.error === 'RoomIsFull' && 'Pokój pełny'}
-                      {joinError.error === 'ServerError' && 'Błąd serwera'}
-                    </h3>
-                    <p className="text-red-300/80 text-sm leading-relaxed">{joinError.message}</p>
-                  </div>
-                  <button
-                    onClick={() => setJoinError(null)}
-                    className="flex-shrink-0 text-red-400/60 hover:text-red-300 transition-colors p-1 rounded-lg hover:bg-red-500/10"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
 
-        <MatchmakingDialog
-          open={dialogOpen}
-          current={current}
-          max={max}
-          status={status === "starting" ? "starting" : status === "failed" ? "failed" : "waiting"}
-          reason={reason}
-          onCancel={abort}
-          busy={busy}
-        />
-        <Toaster richColors />
-      </div>
+          {/* Game entry form */}
+          <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
+            <div className="space-y-6">
+              {/* Input section */}
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-slate-300 mb-2">
+                  Wybierz swój pseudonim
+                </label>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder={placeholder}
+                      value={nick}
+                      onChange={e => setNick(e.target.value)}
+                      disabled={busy || status !== "idle"}
+                      className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <Button
+                    disabled={busy || status !== "idle"}
+                    onClick={submit}
+                    className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 transform hover:scale-105"
+                  >
+                    {busy ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Łączenie…
+                      </div>
+                    ) : (
+                      "Zagraj"
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Demo buttons */}
+              {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
+                <div className="pt-6 border-t border-slate-700/50">
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <span className="text-sm font-medium text-slate-400">Tryb deweloperski</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {[
+                      { label: "PreDraft", screen: "predraft" },
+                      { label: "Draft", screen: "draft" },
+                      { label: "Draft Break", screen: "draft" },
+                      { label: "Wyniki", screen: "ended" },
+                      { label: "Konkurs", screen: "main-competition" }
+                    ].map((demo) => (
+                      <Button
+                        key={demo.screen + demo.label}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsDemo(true);
+                          setScreen(demo.screen as any);
+                        }}
+                        className="text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500/50 rounded-lg transition-all duration-200"
+                      >
+                        {demo.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Error display */}
+              {joinError && (
+                <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 backdrop-blur-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-red-400 font-semibold text-sm mb-1">
+                        {joinError.error === 'MultipleGamesNotSupported' && 'Gra już trwa'}
+                        {joinError.error === 'AlreadyJoined' && 'Już dołączyłeś'}
+                        {joinError.error === 'RoomIsFull' && 'Pokój pełny'}
+                        {joinError.error === 'ServerError' && 'Błąd serwera'}
+                      </h3>
+                      <p className="text-red-300/80 text-sm leading-relaxed">{joinError.message}</p>
+                    </div>
+                    <button
+                      onClick={() => setJoinError(null)}
+                      className="flex-shrink-0 text-red-400/60 hover:text-red-300 transition-colors p-1 rounded-lg hover:bg-red-500/10"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <MatchmakingDialog
+            open={dialogOpen}
+            current={current}
+            max={max}
+            status={status === "starting" ? "starting" : status === "failed" ? "failed" : "waiting"}
+            reason={reason}
+            onCancel={abort}
+            busy={busy}
+          />
+          <Toaster richColors />
+        </div>
+      )}
 
       {/* Transition screens */}
       <TransitionScreen
@@ -573,7 +594,7 @@ export default function HomePage() {
         isDemo ? (
           <PreDraftDemo onBack={() => {
             setIsDemo(false);
-            setScreen("none");
+            hardReset();
           }} />
         ) : gameData && (gameData.preDraft || gameData.lastCompetitionState) ? (
           (() => {
@@ -601,7 +622,7 @@ export default function HomePage() {
 
       {screen === "draft" && (
         isDemo ? (
-          <DraftDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+          <DraftDemo onBack={() => { setIsDemo(false); hardReset(); }} />
         ) : gameData && playerId ? (
           <DraftScreen
             gameData={gameData}
@@ -614,7 +635,7 @@ export default function HomePage() {
       {screen === "ended" && (
         isDemo ? (
           <div className="fixed inset-0 z-50">
-            <GameEndedDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+            <GameEndedDemo onBack={() => { setIsDemo(false); hardReset(); }} />
           </div>
         ) : (
           <div className="fixed inset-0 z-50">
@@ -630,7 +651,7 @@ export default function HomePage() {
               return (
                 <GameEndedScreen
                   results={entries}
-                  onBackToMenu={() => { setScreen("none"); }}
+                  onBackToMenu={() => { hardReset(); }}
                   policy={gameData.ended?.policy === "PodiumAtAllCosts" ? "PodiumAtAllCosts" : "Classic"}
                   shareUrl={typeof window !== 'undefined' ? window.location.href : undefined}
                   myPlayerId={playerId}
@@ -646,7 +667,7 @@ export default function HomePage() {
 
       {screen === "main-competition" && (
         isDemo ? (
-          <MainCompetitionDemo onBack={() => { setIsDemo(false); setScreen("none"); }} />
+          <MainCompetitionDemo onBack={() => { setIsDemo(false); hardReset(); }} />
         ) : gameData ? (
           <div className="fixed inset-0 z-50">
             <MainCompetitionScreen

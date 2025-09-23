@@ -180,6 +180,16 @@ button {
   animation: spin-slow 2s linear infinite;
 }
 
+@keyframes fall {
+  0% {
+    transform: translateY(-100vh);
+  }
+
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
 /* ───────────────── Card reveal shader effect ───────────────── */
 @keyframes card-reveal {
   0% {
