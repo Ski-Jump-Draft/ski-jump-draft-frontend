@@ -9,6 +9,7 @@ import { fisToAlpha2 } from '@/utils/countryCodes';
 import { Bot, User, Clock, Flag } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
+import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
 
 interface PreDraftScreenProps {
     gameData: GameUpdatedDto;
@@ -250,43 +251,72 @@ export function PreDraftScreen({
                                         return (
                                             <div
                                                 key={result.competitionJumperId}
-                                                className={`flex items-center gap-4 p-3 rounded-lg ${isLastAdded ? 'bg-green-500/15 border border-green-500/40 animate-card-reveal' : 'hover:bg-muted/50 transition-colors duration-200'
+                                                className={`${isLastAdded ? 'bg-green-500/15 border border-green-500/40 animate-card-reveal' : 'hover:bg-muted/50 transition-colors duration-200'
                                                     }`}
                                             >
-                                                <span className="text-sm font-mono text-muted-foreground w-8">{result.rank}</span>
-                                                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center overflow-hidden">
-                                                    <img
-                                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${jumper?.name || 'Unknown'}`}
-                                                        alt={jumper?.name || 'Unknown'}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                <img
-                                                    src={getCountryFlag(jumper?.countryFisCode || 'UNK')}
-                                                    alt={jumper?.countryFisCode || 'UNK'}
-                                                    className="w-6 h-4 object-cover rounded"
-                                                />
-                                                <div className="flex-1">
-                                                    <span className="font-medium text-foreground">
-                                                        {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
-                                                    </span>
-                                                </div>
-                                                <div className="text-right" style={{ marginLeft: '-20px' }}>
-                                                    {result.rounds.length > 0 ? (
-                                                        <>
-                                                            <div className="text-sm font-mono text-foreground">
-                                                                {result.rounds[result.rounds.length - 1]?.distance.toFixed(1)}m
+                                                {result.rounds.length > 0 ? (
+                                                    <JumpResultTooltip
+                                                        round={result.rounds[result.rounds.length - 1]}
+                                                        startingGate={gameData.preDraft?.competition?.gateState?.starting || gameData.lastCompetitionState?.gateState?.starting}
+                                                        jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode } : undefined}
+                                                        className="block"
+                                                    >
+                                                        <div className="flex items-center gap-4 p-3 rounded-lg">
+                                                            <span className="text-sm font-mono text-muted-foreground w-8">{result.rank}</span>
+                                                            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+                                                                <img
+                                                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${jumper?.name || 'Unknown'}`}
+                                                                    alt={jumper?.name || 'Unknown'}
+                                                                    className="w-full h-full object-cover"
+                                                                />
                                                             </div>
-                                                            <div className="text-xs text-muted-foreground">
-                                                                {result.rounds[result.rounds.length - 1]?.points.toFixed(1)}p
+                                                            <img
+                                                                src={getCountryFlag(jumper?.countryFisCode || 'UNK')}
+                                                                alt={jumper?.countryFisCode || 'UNK'}
+                                                                className="w-6 h-4 object-cover rounded"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <span className="font-medium text-foreground">
+                                                                    {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
+                                                                </span>
                                                             </div>
-                                                        </>
-                                                    ) : (
-                                                        <div className="text-xs text-muted-foreground">
-                                                            Brak skoków
+                                                            <div className="text-right" style={{ marginLeft: '-20px' }}>
+                                                                <div className="text-sm font-mono text-foreground">
+                                                                    {result.rounds[result.rounds.length - 1]?.distance.toFixed(1)}m
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {result.rounds[result.rounds.length - 1]?.points.toFixed(1)}p
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
+                                                    </JumpResultTooltip>
+                                                ) : (
+                                                    <div className="flex items-center gap-4 p-3 rounded-lg">
+                                                        <span className="text-sm font-mono text-muted-foreground w-8">{result.rank}</span>
+                                                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+                                                            <img
+                                                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${jumper?.name || 'Unknown'}`}
+                                                                alt={jumper?.name || 'Unknown'}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <img
+                                                            src={getCountryFlag(jumper?.countryFisCode || 'UNK')}
+                                                            alt={jumper?.countryFisCode || 'UNK'}
+                                                            className="w-6 h-4 object-cover rounded"
+                                                        />
+                                                        <div className="flex-1">
+                                                            <span className="font-medium text-foreground">
+                                                                {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-right" style={{ marginLeft: '-20px' }}>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                Brak skoków
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })}

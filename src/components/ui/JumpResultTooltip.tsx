@@ -1,0 +1,161 @@
+import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { CompetitionRoundResultDto } from '@/types/game';
+import { fisToAlpha2 } from '@/utils/countryCodes';
+
+interface JumpResultTooltipProps {
+    round: CompetitionRoundResultDto;
+    className?: string;
+    children: React.ReactNode;
+    startingGate?: number; // Only need starting gate for comparison
+    jumperInfo?: { name: string; surname: string; countryFisCode: string };
+}
+
+export function JumpResultTooltip({ round, className, children, startingGate, jumperInfo }: JumpResultTooltipProps) {
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        if (!open) return;
+
+        const handlePointerDown = (event: PointerEvent) => {
+            if (!containerRef.current?.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        return () => document.removeEventListener('pointerdown', handlePointerDown);
+    }, [open]);
+
+    const toggle = () => setOpen((prev) => !prev);
+    const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggle();
+        }
+    };
+
+    const formatWind = (value: number) => {
+        const color = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : 'text-foreground';
+        return <span className={color}>{value.toFixed(2)} m/s</span>;
+    };
+
+    const formatCompensation = (value: number | null | undefined, showSign = true) => {
+        if (value == null) return '—';
+        const sign = showSign ? (value > 0 ? '+' : value < 0 ? '−' : '') : '';
+        const absolute = Math.abs(value).toFixed(1);
+        const color = value > 0 ? 'text-green-600' : value < 0 ? 'text-red-600' : 'text-foreground';
+        return <span className={color}>{sign}{absolute} pkt</span>;
+    };
+
+    const windComp = round.windCompensation;
+    const gateComp = round.gateCompensation;
+    const totalComp = round.totalCompensation;
+
+    // Determine what to show - only show if we have actual data
+    const hasWindComp = windComp != null && windComp !== 0;
+    const hasGateComp = gateComp != null && gateComp !== 0;
+    const hasBothComps = hasWindComp && hasGateComp;
+    const hasOnlyWind = hasWindComp && !hasGateComp;
+    const hasOnlyGate = !hasWindComp && hasGateComp;
+
+    // Gate info
+    const currentGate = round.gate;
+    const gateChange = currentGate != null && startingGate != null ? currentGate - startingGate : null;
+    const gateChangeStr = gateChange != null && gateChange !== 0 ? ` (${gateChange > 0 ? '+' : ''}${gateChange})` : '';
+
+    return (
+        <div ref={containerRef} className={cn('relative', className)}>
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={toggle}
+                onKeyDown={onKeyDown}
+                title="Kliknij, aby wyświetlić szczegóły"
+                className="w-full cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 rounded-sm"
+            >
+                {children}
+            </div>
+            {open && (
+                <div className="absolute z-[9999] top-full left-1/2 transform -translate-x-1/2 mt-2 w-56 rounded-lg border border-gray-600 bg-gray-700 shadow-xl text-sm">
+                    {/* Header with jumper info */}
+                    {jumperInfo && (
+                        <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-gray-500">
+                            <img
+                                src={`/flags/${fisToAlpha2(jumperInfo.countryFisCode) || 'xx'}.svg`}
+                                alt={jumperInfo.countryFisCode}
+                                className="w-5 h-3 object-cover rounded"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                            <span className="font-bold text-gray-100 text-base">
+                                {jumperInfo.name} {jumperInfo.surname}
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="p-3">
+                        {/* Wind - always show */}
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-gray-300 font-medium">Wiatr:</span>
+                            {formatWind(round.windAverage)}
+                        </div>
+
+                        {/* Gate info - only show if we have gate data */}
+                        {currentGate != null && (
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-gray-300 font-medium">Belka:</span>
+                                <span className="text-gray-100">{currentGate}{gateChangeStr}</span>
+                            </div>
+                        )}
+
+                        {/* Show compensations only if they exist and are not zero */}
+                        {hasBothComps && (
+                            <>
+                                {/* Wind compensation */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-gray-300 font-medium">Rekomp. (wiatr):</span>
+                                    {formatCompensation(windComp)}
+                                </div>
+
+                                {/* Gate compensation */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-gray-300 font-medium">Rekomp. (belka):</span>
+                                    {formatCompensation(gateComp)}
+                                </div>
+
+                                {/* Total compensation */}
+                                <div className="flex items-center justify-between border-t border-gray-500 pt-2 mt-2">
+                                    <span className="text-gray-300 font-semibold">Rekomp.:</span>
+                                    {formatCompensation(totalComp)}
+                                </div>
+                            </>
+                        )}
+
+                        {hasOnlyWind && (
+                            <>
+                                {/* Wind compensation */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-300 font-semibold">Rekomp. (wiatr):</span>
+                                    {formatCompensation(windComp)}
+                                </div>
+                            </>
+                        )}
+
+                        {hasOnlyGate && (
+                            <>
+                                {/* Gate compensation */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-300 font-semibold">Rekomp. (belka):</span>
+                                    {formatCompensation(gateComp)}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

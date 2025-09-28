@@ -11,6 +11,7 @@ import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
+import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
 
 interface MainCompetitionScreenProps {
     gameData: GameUpdatedDto;
@@ -271,14 +272,21 @@ export function MainCompetitionScreen({
                                                             {Array.from({ length: maxRounds }).map((_, i) => (
                                                                 <div key={`result-${i}`} className="text-right w-24">
                                                                     {result.rounds[i] ? (
-                                                                        <>
-                                                                            <div className="text-sm font-mono text-foreground">
-                                                                                {result.rounds[i].distance.toFixed(1)}m
-                                                                            </div>
-                                                                            <div className="text-xs text-muted-foreground">
-                                                                                {result.rounds[i].points.toFixed(1)}p
-                                                                            </div>
-                                                                        </>
+                                                                        <JumpResultTooltip
+                                                                            round={result.rounds[i]}
+                                                                            startingGate={competition?.gateState?.starting}
+                                                                            jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode } : undefined}
+                                                                            className="text-right"
+                                                                        >
+                                                                            <>
+                                                                                <div className="text-sm font-mono text-foreground">
+                                                                                    {result.rounds[i].distance.toFixed(1)}m
+                                                                                </div>
+                                                                                <div className="text-xs text-muted-foreground">
+                                                                                    {result.rounds[i].points.toFixed(1)}p
+                                                                                </div>
+                                                                            </>
+                                                                        </JumpResultTooltip>
                                                                     ) : (
                                                                         <div className="text-xs text-muted-foreground">-</div>
                                                                     )}

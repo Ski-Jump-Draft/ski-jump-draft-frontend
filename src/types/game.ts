@@ -135,6 +135,7 @@ export interface CompetitionRoundResultDto {
     judgePoints?: number | null;
     windCompensation?: number | null;
     windAverage: number;
+    gate: number;
     gateCompensation?: number | null;
     totalCompensation: number;
 }
