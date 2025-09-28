@@ -10,6 +10,7 @@ import { Bot, User, Clock, Flag, Trophy, Info } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 
 interface MainCompetitionScreenProps {
     gameData: GameUpdatedDto;
@@ -330,9 +331,13 @@ export function MainCompetitionScreen({
                                     style={{ animation: `countdown ${nextJumpInMilliseconds / 1000}s linear forwards` }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-sm font-bold text-white drop-shadow-lg">
-                                        {Math.round(countdown)}s
-                                    </span>
+                                    {countdown > 0 ? (
+                                        <span className="text-sm font-bold text-white drop-shadow-lg">
+                                            {Math.round(countdown)}s
+                                        </span>
+                                    ) : (
+                                        <AnimatedJumpingText />
+                                    )}
                                 </div>
                             </div>
                         )}

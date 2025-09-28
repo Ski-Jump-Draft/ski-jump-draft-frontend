@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { fisToAlpha2 } from '@/utils/countryCodes';
 import { Bot, User, Clock, Flag } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
+import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 
 interface PreDraftScreenProps {
     gameData: GameUpdatedDto;
@@ -326,9 +327,13 @@ export function PreDraftScreen({
                                     style={{ width: `${initialCountdown > 0 ? ((initialCountdown - countdown) / initialCountdown) * 100 : 0}%` }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-sm font-bold text-white drop-shadow-lg">
-                                        {countdown}s
-                                    </span>
+                                    {countdown > 0 ? (
+                                        <span className="text-sm font-bold text-white drop-shadow-lg">
+                                            {countdown}s
+                                        </span>
+                                    ) : (
+                                        <AnimatedJumpingText />
+                                    )}
                                 </div>
                             </div>
                         )}
