@@ -392,6 +392,24 @@ export function MainCompetitionScreen({
 
                                         <div className="border-t border-border/50"></div>
 
+                                        {/* Wind and Gate Info */}
+                                        <div className="grid grid-cols-2 gap-4 text-center text-sm">
+                                            <div>
+                                                <div className="text-base font-medium text-foreground">
+                                                    {lastJumpResult.windAverage.toFixed(2)} m/s
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">Średni wiatr</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-base font-medium text-foreground">
+                                                    {lastJumpResult.gate}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">Belka</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-border/50"></div>
+
                                         {lastJumpResult.judges && (
                                             <div>
                                                 <div className="grid grid-cols-5 gap-1 text-center mb-2">

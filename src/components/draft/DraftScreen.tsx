@@ -140,6 +140,7 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
                         myPlayerId={myPlayerId}
                         draftPicks={draft?.picks || []}
                         isMyTurn={!isReadOnly && draft?.currentPlayerId === myPlayerId}
+                        startingGate={gameData.preDraft?.competition?.gateState?.starting || gameData.lastCompetitionState?.gateState?.starting}
                     />
                 </div>
 

@@ -43,13 +43,23 @@ export const DraftDemo = ({ onBack }: DraftDemoProps) => {
         }));
 
         const results: CompetitionResultDto[] = Array.from({ length: 80 }).map((_, i) => {
+            const windComp = Math.random() > 0.2 ? (Math.random() - 0.5) * 10 : null; // 80% ma rekompensatę
+            const gateComp = Math.random() > 0.1 ? (Math.random() - 0.5) * 8 : null;  // 90% ma rekompensatę
+            const totalComp = (windComp || 0) + (gateComp || 0);
+            const gate = 20 + Math.floor((Math.random() - 0.5) * 6); // 17-23
+
             const round: CompetitionRoundResultDto = {
                 gameJumperId: jumpers[i].gameJumperId,
                 competitionJumperId: competitionJumpers[i].competitionJumperId,
                 distance: 120 + (i % 15),
-                points: 20 + (i % 10),
-                windAverage: 0.5,
-                totalCompensation: 0,
+                points: 20 + (i % 10) + totalComp,
+                judges: [18.5, 19.0, 18.5, 19.0, 18.5],
+                judgePoints: 18.5 + (Math.random() - 0.5) * 2,
+                windCompensation: windComp,
+                windAverage: (Math.random() - 0.5) * 4, // -2 to +2 m/s
+                gate: gate,
+                gateCompensation: gateComp,
+                totalCompensation: totalComp,
             };
             return {
                 rank: i + 1,
@@ -101,7 +111,11 @@ export const DraftDemo = ({ onBack }: DraftDemoProps) => {
             mainCompetition: null,
             break: null,
             ended: null,
-            lastCompetitionState: null,
+            lastCompetitionState: {
+                gateState: { starting: 20 }, // Starting gate for tooltip comparison
+                results: results,
+                startlist: [],
+            },
             lastCompetitionResultDto: null,
         };
 
