@@ -41,6 +41,14 @@ export default function HomePage() {
 
   useEffect(() => {
     setIsClient(true);
+    // Generate snowflakes only once
+    setSnowflakes(Array.from({ length: 60 }, () => ({
+      size: 12 + Math.random() * 8,
+      left: Math.random() * 100,
+      animationDuration: 12 + Math.random() * 18,
+      animationDelay: Math.random() * 20,
+      opacity: 0.7 + Math.random() * 0.3,
+    })));
   }, []);
 
   /* matchmaking */
@@ -73,6 +81,13 @@ export default function HomePage() {
   const [showMainCompetitionDemo, setShowMainCompetitionDemo] = useState(false);
   const [myDraftedJumperIds, setMyDraftedJumperIds] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [snowflakes, setSnowflakes] = useState<Array<{
+    size: number;
+    left: number;
+    animationDuration: number;
+    animationDelay: number;
+    opacity: number;
+  }>>([]);
 
   // Helper: support backend ranking serialized as { Position, Points }
   const readRankingTuple = (value: unknown): [number, number] => {
@@ -419,7 +434,7 @@ export default function HomePage() {
 
   /* ── UI ── */
   return (
-    <main className="relative flex h-screen w-screen items-center justify-center overflow-hidden font-sans">
+    <main className="relative flex min-h-screen w-screen items-center justify-center overflow-auto font-sans">
       {/* Animated background with gradient overlay */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -430,32 +445,29 @@ export default function HomePage() {
 
       {/* Falling snow effect */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        {isClient && [...Array(60)].map((_, i) => {
-          const size = 12 + Math.random() * 8; // 12-20px
-          return (
-            <div
-              key={i}
-              className="absolute text-white"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `-30px`,
-                animation: `fall ${12 + Math.random() * 18}s linear infinite`,
-                animationDelay: `${Math.random() * 20}s`,
-                opacity: 0.7 + Math.random() * 0.3,
-              }}
+        {isClient && snowflakes.map((snowflake, i) => (
+          <div
+            key={i}
+            className="absolute text-white"
+            style={{
+              left: `${snowflake.left}%`,
+              top: `-30px`,
+              animation: `fall ${snowflake.animationDuration}s linear infinite`,
+              animationDelay: `${snowflake.animationDelay}s`,
+              opacity: snowflake.opacity,
+            }}
+          >
+            <svg
+              width={snowflake.size}
+              height={snowflake.size}
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="drop-shadow-lg"
             >
-              <svg
-                width={size}
-                height={size}
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="drop-shadow-lg"
-              >
-                <path d="M12 2L13.09 8.26L19 7L14.74 13.09L22 12L15.74 14.91L21 17L14.91 18.74L20 22L12 19L11 22L9.09 15.74L3 17L7.26 10.91L0 12L6.26 9.09L1 7L7.09 5.26L2 2L10 5L11 2L12 2Z" />
-              </svg>
-            </div>
-          );
-        })}
+              <path d="M12 2L13.09 8.26L19 7L14.74 13.09L22 12L15.74 14.91L21 17L14.91 18.74L20 22L12 19L11 22L9.09 15.74L3 17L7.26 10.91L0 12L6.26 9.09L1 7L7.09 5.26L2 2L10 5L11 2L12 2Z" />
+            </svg>
+          </div>
+        ))}
       </div>
 
       {/* Main content container - only show when screen is "none" */}

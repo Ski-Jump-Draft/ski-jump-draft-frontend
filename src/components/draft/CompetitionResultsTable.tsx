@@ -63,7 +63,7 @@ export const CompetitionResultsTable = ({
                 </div>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 px-4 py-2 font-semibold text-sm text-gray-400 border-b border-neutral-700 sticky top-0 bg-neutral-800">
+                <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-6 px-4 py-2 font-semibold text-sm text-gray-400 border-b border-neutral-700 sticky top-0 bg-neutral-800">
                     <div className="text-right">#</div>
                     <div>Skoczek</div>
                     <div className="text-right">Odległość</div>
@@ -95,7 +95,7 @@ export const CompetitionResultsTable = ({
                                             className="block"
                                         >
                                             <div
-                                                className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 px-4 py-3 border-b border-neutral-700/50 transition-all duration-300
+                                                className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-6 px-4 py-3 border-b border-neutral-700/50 transition-all duration-300
                                                     ${myPick ? 'bg-purple-600/20' :
                                                         othersPick ? 'bg-yellow-100/20' :
                                                             isDrafted ? 'bg-gray-600/20' : ''}
@@ -123,7 +123,7 @@ export const CompetitionResultsTable = ({
                                         </JumpResultTooltip>
                                     ) : (
                                         <div
-                                            className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-4 px-4 py-3 border-b border-neutral-700/50 transition-all duration-300
+                                            className={`grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-6 px-4 py-3 border-b border-neutral-700/50 transition-all duration-300
                                                 ${myPick ? 'bg-purple-600/20' :
                                                     othersPick ? 'bg-yellow-100/20' :
                                                         isDrafted ? 'bg-gray-600/20' : ''}
