@@ -117,10 +117,26 @@ export default function HomePage() {
   useEffect(() => {
     if (gameData?.nextStatus) {
       const timeSpan = gameData.nextStatus.in;
-      const parts = timeSpan.split(':');
-      const seconds = parseInt(parts[2], 10);
 
-      if (seconds === 0) {
+      // Parse TimeSpan properly (format: "00:00:18" or "00:01:30")
+      const parseTimeSpan = (timeSpan: string): number => {
+        if (!timeSpan) return 0;
+        const parts = timeSpan.split(':');
+        if (parts.length === 3) {
+          const hours = parseInt(parts[0], 10);
+          const minutes = parseInt(parts[1], 10);
+          const secs = parseInt(parts[2], 10);
+          return hours * 3600 + minutes * 60 + secs;
+        }
+        return 0;
+      };
+
+      const totalSeconds = parseTimeSpan(timeSpan);
+
+      console.log("Timer useEffect - TimeSpan:", timeSpan, "TotalSeconds:", totalSeconds, "NextStatus:", gameData.nextStatus.status);
+
+      if (totalSeconds === 0) {
+        console.log("Timer reached 0, switching to:", gameData.nextStatus.status);
         // Timer reached 0, switch to next phase
         switch (gameData.nextStatus.status) {
           case "Draft":
@@ -137,6 +153,8 @@ export default function HomePage() {
             break;
         }
       }
+    } else {
+      console.log("Timer useEffect - No nextStatus available");
     }
   }, [gameData?.nextStatus]);
 
@@ -154,6 +172,7 @@ export default function HomePage() {
       const t = setTimeout(() => {
         setDialogOpen(false);
         setScreen("transition1");
+        console.log("Matchmaking ended, switching to transition1 screen");
         // Don't set matchmakingId to null here - keep it for SignalR
       }, 2000);
       return () => clearTimeout(t);
@@ -176,12 +195,14 @@ export default function HomePage() {
         case "gameUpdated":
           setGameData(ev.data);
           setGameStatus(ev.data.status);
+          console.log("GameUpdated received - Status:", ev.data.status, "NextStatus:", ev.data.nextStatus?.status, "Current screen:", screen);
 
           // Clear matchmakingId after receiving first GameUpdated, but only if we have gameHubId
           // This is the signal that game has started and we received first game data
           if (matchmakingId) {
             // Stay on the same SignalR connection; do not switch to a new game connection here
             setWaitingForGameStart(false);
+            console.log("First game data received after matchmaking, clearing waitingForGameStart");
 
             // Update playerId to game player ID after matchmaking
             if (playerNick && ev.data.header?.players) {
@@ -194,19 +215,31 @@ export default function HomePage() {
           }
 
           // Handle screen switching based on game status
-          // First, check for `nextStatus` to handle timed transitions
-          // If we have nextStatus, stay on transition screen and let timer handle the switch
-          // But if nextStatus.status is the same as current status, we're already in the right phase
+          // If we have nextStatus and we're not in the target phase yet, stay on transition screen
+          // Only switch to actual game screen when we reach the target phase or when nextStatus is null
           if (ev.data.nextStatus && ev.data.nextStatus.status !== ev.data.status && ev.data.status !== 'Break Ended' && ev.data.status !== 'Break PreDraft' && ev.data.nextStatus.status !== 'PreDraftNextCompetition') {
-            // Don't change screen yet - let the timer handle it
-            setScreen("transition1");
+            // Stay on transition screen and let timer handle the switch
+            // Don't change screen here - keep showing transition until timer expires
+            console.log("Keeping transition screen, waiting for timer. Current status:", ev.data.status, "Next status:", ev.data.nextStatus.status);
           } else {
+            // No nextStatus, but if we just finished matchmaking, stay on transition screen
+            // until we get proper nextStatus or until the game actually starts
+            // But don't block if we're already in the target phase (timer already switched us)
+            if (waitingForGameStart || (matchmakingId && screen === "transition1" && ev.data.status !== "PreDraft")) {
+              console.log("Just finished matchmaking, staying on transition screen until game phase starts");
+              return; // Don't switch screens yet
+            }
+
             // No nextStatus, switch immediately based on game status
             switch (ev.data.status) {
               case "PreDraft":
+                console.log("PreDraft status received, checking for competition data");
                 // Only show predraft if we have active competition data
                 if (ev.data.preDraft?.competition) {
+                  console.log("PreDraft competition data found, switching to predraft screen");
                   setScreen("predraft");
+                } else {
+                  console.log("No PreDraft competition data, staying on current screen");
                 }
                 // If pre-draft ended but we have preDraftEndedAt, stay on predraft screen for 5 seconds
                 // The useEffect will handle switching to draft after 5 seconds
