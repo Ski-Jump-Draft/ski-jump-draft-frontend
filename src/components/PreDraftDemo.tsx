@@ -44,7 +44,14 @@ const mockGameData: GameUpdatedDto = {
     preDraftsCount: 2,
     endedPreDraft: null,
     header: {
-        hillId: 'hill-123',
+        hill: {
+            name: 'Wielka Krokiew',
+            location: 'Zakopane',
+            k: 125,
+            hs: 140,
+            countryFisCode: 'POL',
+            alpha2Code: 'pl'
+        },
         players: mockPlayers,
         jumpers: [
             { gameJumperId: 'j1', gameWorldJumperId: 'world-j1', name: 'Kamil', surname: 'STOCH', countryFisCode: 'POL' },

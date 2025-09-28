@@ -38,6 +38,7 @@ export function PreDraftScreen({
 }: PreDraftScreenProps) {
     const [activeSession, setActiveSession] = useState(1);
     const [countdown, setCountdown] = useState(nextJumpInSeconds);
+    const [initialCountdown, setInitialCountdown] = useState(nextJumpInSeconds);
     const [lastHighlightedJumper, setLastHighlightedJumper] = useState<string | null>(null);
 
     // Log session index from backend
@@ -60,9 +61,9 @@ export function PreDraftScreen({
 
     useEffect(() => {
         // Reset countdown when backend provides a new timer or a new jump cycle starts
-        // Limit to 6s for UI progress bar
-        const limitedCountdown = Math.min(Math.floor(nextJumpInSeconds), 6);
-        setCountdown(limitedCountdown);
+        const newCountdown = Math.floor(nextJumpInSeconds);
+        setCountdown(newCountdown);
+        setInitialCountdown(newCountdown);
     }, [
         nextJumpInSeconds,
         // Also restart when a new result/jump arrives even if value stays the same
@@ -121,11 +122,26 @@ export function PreDraftScreen({
             {/* Header */}
             <div className="mb-4 lg:mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 flex-shrink-0">
                 <div className="flex-1">
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-2 lg:gap-4 mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 lg:gap-4 mb-2">
                         <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Faza Obserwacji</h1>
                         <span className="text-base lg:text-lg text-muted-foreground">
                             Sesja {sessionDisplay}/{gameData.preDraftsCount}
                         </span>
+                        {/* Hill information - subtle display */}
+                        {gameData.header.hill && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground/80">
+                                <span className="font-medium">{gameData.header.hill.location}</span>
+                                <span className="font-medium">HS{Math.round(gameData.header.hill.hs)}</span>
+                                <img
+                                    src={getCountryFlag(gameData.header.hill.countryFisCode)}
+                                    alt={gameData.header.hill.countryFisCode}
+                                    className="w-4 h-3 object-cover rounded flex-shrink-0"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
                     <p className="text-xs lg:text-sm text-muted-foreground max-w-2xl">
                         Obserwuj skoki zawodników i planuj swoje wybory w Draft. Pamiętaj, że w treningach nie ma not za styl,
@@ -307,7 +323,7 @@ export function PreDraftScreen({
                                 <div
                                     key={`progress-${gameData?.lastCompetitionResultDto?.competitionJumperId || 'initial'}`}
                                     className="h-8 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg"
-                                    style={{ width: `${((6 - countdown) / 6) * 100}%` }}
+                                    style={{ width: `${initialCountdown > 0 ? ((initialCountdown - countdown) / initialCountdown) * 100 : 0}%` }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <span className="text-sm font-bold text-white drop-shadow-lg">

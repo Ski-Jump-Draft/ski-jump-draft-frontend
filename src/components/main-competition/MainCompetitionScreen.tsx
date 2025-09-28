@@ -38,8 +38,7 @@ export function MainCompetitionScreen({
     const isCompetitionEnded = isEnded || competition?.status === "Ended";
 
     useEffect(() => {
-        const limitedCountdown = Math.min(Math.floor(nextJumpInMilliseconds / 1000), 6);
-        setCountdown(limitedCountdown);
+        setCountdown(Math.floor(nextJumpInMilliseconds / 1000));
     }, [
         nextJumpInMilliseconds,
         gameData?.lastCompetitionResultDto,
