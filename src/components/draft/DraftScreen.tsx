@@ -61,7 +61,7 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
 
         setTimeout(() => {
             setShowPickAnimation(null);
-        }, 800); // Animation duration
+        }, 400); // Animation duration - shortened by half
     };
 
     // Always show DraftScreen - if no draft data, show pre-draft results

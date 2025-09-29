@@ -41,14 +41,6 @@ export default function HomePage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Generate snowflakes only once
-    setSnowflakes(Array.from({ length: 60 }, () => ({
-      size: 12 + Math.random() * 8,
-      left: Math.random() * 100,
-      animationDuration: 12 + Math.random() * 18,
-      animationDelay: Math.random() * 20,
-      opacity: 0.7 + Math.random() * 0.3,
-    })));
   }, []);
 
   /* matchmaking */
@@ -81,13 +73,19 @@ export default function HomePage() {
   const [showMainCompetitionDemo, setShowMainCompetitionDemo] = useState(false);
   const [myDraftedJumperIds, setMyDraftedJumperIds] = useState<string[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [snowflakes, setSnowflakes] = useState<Array<{
+  const [snowflakes] = useState<Array<{
     size: number;
     left: number;
     animationDuration: number;
     animationDelay: number;
     opacity: number;
-  }>>([]);
+  }>>(() => Array.from({ length: 60 }, () => ({
+    size: 12 + Math.random() * 8,
+    left: Math.random() * 100,
+    animationDuration: 12 + Math.random() * 18,
+    animationDelay: Math.random() * 20,
+    opacity: 0.7 + Math.random() * 0.3,
+  })));
 
   // Helper: support backend ranking serialized as { Position, Points }
   const readRankingTuple = (value: unknown): [number, number] => {

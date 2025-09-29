@@ -153,7 +153,7 @@ export function PreDraftScreen({
                 <div className="flex items-center gap-4">
                     {(isBreak || gameData.status === "Break PreDraft") && nextStatus ? (
                         <SimplePhaseTimer
-                            label={gameData.status === "Break PreDraft" || nextStatus.status === "PreDraftNextCompetition" ? "Następna sesja" : "Draft"}
+                            label={gameData.status === "Break PreDraft" || nextStatus.status === "PreDraftNextCompetition" ? "Następna sesja" : "Przejście dalej"}
                             timeSpan={nextStatus.in}
                             subtractSeconds={0}
                             initialSeconds={isPreDraftEnded ? 5 : undefined}
@@ -258,7 +258,7 @@ export function PreDraftScreen({
                                                     <JumpResultTooltip
                                                         round={result.rounds[result.rounds.length - 1]}
                                                         startingGate={gameData.preDraft?.competition?.gateState?.starting || gameData.lastCompetitionState?.gateState?.starting}
-                                                        jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode } : undefined}
+                                                        jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode, bib: result.bib } : undefined}
                                                         className="block"
                                                     >
                                                         <div className="flex items-center gap-4 p-3 rounded-lg">

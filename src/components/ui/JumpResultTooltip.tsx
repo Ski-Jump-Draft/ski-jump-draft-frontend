@@ -8,10 +8,11 @@ interface JumpResultTooltipProps {
     className?: string;
     children: React.ReactNode;
     startingGate?: number; // Only need starting gate for comparison
-    jumperInfo?: { name: string; surname: string; countryFisCode: string };
+    jumperInfo?: { name: string; surname: string; countryFisCode: string; bib?: number };
+    roundIndex?: number; // Optional round index to show "Runda N" in tooltip
 }
 
-export function JumpResultTooltip({ round, className, children, startingGate, jumperInfo }: JumpResultTooltipProps) {
+export function JumpResultTooltip({ round, className, children, startingGate, jumperInfo, roundIndex }: JumpResultTooltipProps) {
     const [open, setOpen] = useState(false);
     const [position, setPosition] = useState<'bottom' | 'top'>('bottom');
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -54,7 +55,12 @@ export function JumpResultTooltip({ round, className, children, startingGate, ju
         }
     }, [open]);
 
-    const toggle = () => setOpen((prev) => !prev);
+    const toggle = (e?: React.MouseEvent) => {
+        if (e) {
+            e.stopPropagation();
+        }
+        setOpen((prev) => !prev);
+    };
     const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -96,7 +102,7 @@ export function JumpResultTooltip({ round, className, children, startingGate, ju
             <div
                 role="button"
                 tabIndex={0}
-                onClick={toggle}
+                onClick={(e) => toggle(e)}
                 onKeyDown={onKeyDown}
                 title="Kliknij, aby wyświetlić szczegóły"
                 className="w-full cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 rounded-sm"
@@ -113,22 +119,41 @@ export function JumpResultTooltip({ round, className, children, startingGate, ju
                 >
                     {/* Header with jumper info */}
                     {jumperInfo && (
-                        <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-gray-500">
-                            <img
-                                src={`/flags/${fisToAlpha2(jumperInfo.countryFisCode) || 'xx'}.svg`}
-                                alt={jumperInfo.countryFisCode}
-                                className="w-5 h-3 object-cover rounded"
-                                onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                }}
-                            />
-                            <span className="font-bold text-gray-100 text-base">
-                                {jumperInfo.name} {jumperInfo.surname}
-                            </span>
+                        <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-gray-500">
+                            <div className="flex items-center gap-2">
+                                <img
+                                    src={`/flags/${fisToAlpha2(jumperInfo.countryFisCode) || 'xx'}.svg`}
+                                    alt={jumperInfo.countryFisCode}
+                                    className="w-5 h-3 object-cover rounded"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                                <span className="font-bold text-gray-100 text-base">
+                                    {jumperInfo.name} {jumperInfo.surname}
+                                </span>
+                            </div>
+                            {jumperInfo.bib && (
+                                <span
+                                    className="text-gray-300 font-semibold text-sm"
+                                    title="Numer startowy"
+                                >
+                                    {jumperInfo.bib}
+                                </span>
+                            )}
                         </div>
                     )}
 
                     <div className="p-3">
+                        {/* Round info - only show if roundIndex is provided */}
+                        {roundIndex != null && (
+                            <div className="flex items-center justify-center mb-3">
+                                <span className="text-gray-400 text-xs font-medium">
+                                    Runda {roundIndex + 1}
+                                </span>
+                            </div>
+                        )}
+
                         {/* Wind - always show */}
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-gray-300 font-medium">Wiatr:</span>

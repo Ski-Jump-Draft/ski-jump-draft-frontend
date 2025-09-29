@@ -36,11 +36,15 @@ export function MainCompetitionScreen({
 
     const nextJumpInMilliseconds = competition?.nextJumpInMilliseconds ?? 0;
     const [countdown, setCountdown] = useState(nextJumpInMilliseconds / 1000);
+    const [initialCountdown, setInitialCountdown] = useState(nextJumpInMilliseconds / 1000);
 
     const isCompetitionEnded = isEnded || competition?.status === "Ended";
 
     useEffect(() => {
-        setCountdown(Math.floor(nextJumpInMilliseconds / 1000));
+        // Reset countdown when backend provides a new timer or a new jump cycle starts
+        const newCountdown = Math.floor(nextJumpInMilliseconds / 1000);
+        setCountdown(newCountdown);
+        setInitialCountdown(newCountdown);
     }, [
         nextJumpInMilliseconds,
         gameData?.lastCompetitionResultDto,
@@ -249,54 +253,94 @@ export function MainCompetitionScreen({
                                                     return (
                                                         <div
                                                             key={result.competitionJumperId}
-                                                            className={cn(`flex items-center gap-4 p-3 rounded-lg`,
-                                                                isLastAdded ? 'bg-blue-500/15 border border-blue-500/40 animate-card-reveal' : 'transition-colors duration-200',
-                                                                isMyJumper && 'bg-purple-600/20',
-                                                                isOthersJumper && 'bg-yellow-100/10',
-                                                                hasLessJumps && 'opacity-60'
-                                                            )}
+                                                            className={`${isLastAdded ? 'bg-blue-500/15 border border-blue-500/40 animate-card-reveal' : 'hover:bg-muted/50 transition-colors duration-200'
+                                                                }`}
                                                         >
-                                                            <span className="text-sm font-mono text-muted-foreground w-8 text-center">{result.rank}</span>
-                                                            <img
-                                                                src={getCountryFlag(jumper?.countryFisCode || 'UNK')}
-                                                                alt={jumper?.countryFisCode || 'UNK'}
-                                                                className="w-6 h-4 object-cover rounded"
-                                                            />
-                                                            <div className="flex-1">
-                                                                <span className="font-medium text-foreground">
-                                                                    {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
-                                                                </span>
-                                                            </div>
+                                                            {result.rounds.length > 0 ? (
+                                                                <JumpResultTooltip
+                                                                    round={result.rounds[result.rounds.length - 1]}
+                                                                    startingGate={competition?.gateState?.starting}
+                                                                    jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode, bib: result.bib } : undefined}
+                                                                    className="block"
+                                                                >
+                                                                    <div className={cn(`flex items-center gap-4 p-3 rounded-lg`,
+                                                                        isMyJumper && 'bg-purple-600/20',
+                                                                        isOthersJumper && 'bg-yellow-100/10',
+                                                                        hasLessJumps && 'opacity-60'
+                                                                    )}>
+                                                                        <span className="text-sm font-mono text-muted-foreground w-8 text-center">{result.rank}</span>
+                                                                        <img
+                                                                            src={getCountryFlag(jumper?.countryFisCode || 'UNK')}
+                                                                            alt={jumper?.countryFisCode || 'UNK'}
+                                                                            className="w-6 h-4 object-cover rounded"
+                                                                        />
+                                                                        <div className="flex-1">
+                                                                            <span className="font-medium text-foreground">
+                                                                                {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
+                                                                            </span>
+                                                                        </div>
 
-                                                            {/* Rounds */}
-                                                            {Array.from({ length: maxRounds }).map((_, i) => (
-                                                                <div key={`result-${i}`} className="text-right w-24">
-                                                                    {result.rounds[i] ? (
-                                                                        <JumpResultTooltip
-                                                                            round={result.rounds[i]}
-                                                                            startingGate={competition?.gateState?.starting}
-                                                                            jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode } : undefined}
-                                                                            className="text-right"
-                                                                        >
-                                                                            <>
-                                                                                <div className="text-sm font-mono text-foreground">
-                                                                                    {result.rounds[i].distance.toFixed(1)}m
-                                                                                </div>
-                                                                                <div className="text-xs text-muted-foreground">
-                                                                                    {result.rounds[i].points.toFixed(1)}p
-                                                                                </div>
-                                                                            </>
-                                                                        </JumpResultTooltip>
-                                                                    ) : (
-                                                                        <div className="text-xs text-muted-foreground">-</div>
-                                                                    )}
+                                                                        {/* Rounds */}
+                                                                        {Array.from({ length: maxRounds }).map((_, i) => (
+                                                                            <div key={`result-${i}`} className="text-right w-24">
+                                                                                {result.rounds[i] ? (
+                                                                                    <JumpResultTooltip
+                                                                                        round={result.rounds[i]}
+                                                                                        startingGate={competition?.gateState?.starting}
+                                                                                        jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode, bib: result.bib } : undefined}
+                                                                                        roundIndex={i}
+                                                                                        className="block"
+                                                                                    >
+                                                                                        <div className="text-right">
+                                                                                            <div className="text-sm font-mono text-foreground">
+                                                                                                {result.rounds[i].distance.toFixed(1)}m
+                                                                                            </div>
+                                                                                            <div className="text-xs text-muted-foreground">
+                                                                                                {result.rounds[i].points.toFixed(1)}p
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </JumpResultTooltip>
+                                                                                ) : (
+                                                                                    <div className="text-xs text-muted-foreground">-</div>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+
+                                                                        {/* Total points sum */}
+                                                                        <div className="text-right font-semibold text-lg w-24">
+                                                                            {result.total.toFixed(1)}
+                                                                        </div>
+                                                                    </div>
+                                                                </JumpResultTooltip>
+                                                            ) : (
+                                                                <div className={cn(`flex items-center gap-4 p-3 rounded-lg`,
+                                                                    isMyJumper && 'bg-purple-600/20',
+                                                                    isOthersJumper && 'bg-yellow-100/10',
+                                                                    hasLessJumps && 'opacity-60'
+                                                                )}>
+                                                                    <span className="text-sm font-mono text-muted-foreground w-8 text-center">{result.rank}</span>
+                                                                    <img
+                                                                        src={getCountryFlag(jumper?.countryFisCode || 'UNK')}
+                                                                        alt={jumper?.countryFisCode || 'UNK'}
+                                                                        className="w-6 h-4 object-cover rounded"
+                                                                    />
+                                                                    <div className="flex-1">
+                                                                        <span className="font-medium text-foreground">
+                                                                            {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
+                                                                        </span>
+                                                                    </div>
+                                                                    {/* Rounds */}
+                                                                    {Array.from({ length: maxRounds }).map((_, i) => (
+                                                                        <div key={`result-${i}`} className="text-right w-24">
+                                                                            <div className="text-xs text-muted-foreground">-</div>
+                                                                        </div>
+                                                                    ))}
+                                                                    {/* Total points sum */}
+                                                                    <div className="text-right font-semibold text-lg w-24">
+                                                                        {result.total.toFixed(1)}
+                                                                    </div>
                                                                 </div>
-                                                            ))}
-
-                                                            {/* Total */}
-                                                            <div className="text-right font-semibold text-lg w-24">
-                                                                {result.total.toFixed(1)}
-                                                            </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
@@ -336,7 +380,7 @@ export function MainCompetitionScreen({
                                             ? "bg-gradient-to-r from-purple-600 to-purple-500"
                                             : "bg-gradient-to-r from-blue-600 to-blue-500"
                                     )}
-                                    style={{ animation: `countdown ${nextJumpInMilliseconds / 1000}s linear forwards` }}
+                                    style={{ width: `${initialCountdown > 0 ? ((initialCountdown - countdown) / initialCountdown) * 100 : 0}%` }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {countdown > 0 ? (

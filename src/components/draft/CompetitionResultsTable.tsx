@@ -91,7 +91,7 @@ export const CompetitionResultsTable = ({
                                         <JumpResultTooltip
                                             round={lastRound}
                                             startingGate={startingGate}
-                                            jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode } : undefined}
+                                            jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode, bib: result.bib } : undefined}
                                             className="block"
                                         >
                                             <div

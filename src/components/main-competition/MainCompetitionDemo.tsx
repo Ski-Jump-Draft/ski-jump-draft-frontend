@@ -15,8 +15,6 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
             draftOrderPolicy: "Classic",
             draftTimeoutInSeconds: 30,
             hill: {
-                gameHillId: "hill1",
-                gameWorldHillId: "whill1",
                 name: "Wielka Krokiew",
                 location: "Zakopane",
                 k: 125,
@@ -57,6 +55,7 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
         },
         mainCompetition: {
             status: "RoundInProgress",
+            roundIndex: 1, // Currently in round 2 (0-indexed)
             startlist: Array.from({ length: 50 }, (_, i) => ({
                 bib: 50 - i,
                 done: i >= 20, // First 20 jumpers have jumped
@@ -67,24 +66,46 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
                 currentJury: 10,
                 coachReduction: null
             },
-            results: Array.from({ length: 20 }, (_, i) => ({
-                rank: i + 1,
-                bib: 50 - i,
-                competitionJumperId: `cj${50 - i}`,
-                total: 140 - i * 1.5,
-                rounds: [{
-                    gameJumperId: `j${50 - i}`,
+            results: Array.from({ length: 20 }, (_, i) => {
+                const hasSecondRound = i < 15;
+                const firstRoundPoints = 140 - i * 1.5;
+                const secondRoundPoints = hasSecondRound ? 135 - i * 1.2 : 0;
+                return {
+                    rank: i + 1,
+                    bib: 50 - i,
                     competitionJumperId: `cj${50 - i}`,
-                    distance: 130 - i * 2,
-                    points: 140 - i * 1.5,
-                    judges: [18.5, 18.0, 18.5, 18.5, 19.0],
-                    judgePoints: 55.5,
-                    windCompensation: 2.1,
-                    windAverage: -0.5,
-                    gateCompensation: 0,
-                    totalCompensation: 2.1
-                }]
-            })),
+                    total: firstRoundPoints + secondRoundPoints,
+                    rounds: [
+                        {
+                            gameJumperId: `j${50 - i}`,
+                            competitionJumperId: `cj${50 - i}`,
+                            distance: 130 - i * 2,
+                            points: 140 - i * 1.5,
+                            judges: [18.5, 18.0, 18.5, 18.5, 19.0],
+                            judgePoints: 55.5,
+                            windCompensation: 2.1,
+                            windAverage: -0.5,
+                            gate: 10,
+                            gateCompensation: 0,
+                            totalCompensation: 2.1
+                        },
+                        // Add second round for some jumpers
+                        ...(i < 15 ? [{
+                            gameJumperId: `j${50 - i}`,
+                            competitionJumperId: `cj${50 - i}`,
+                            distance: 128 - i * 1.5,
+                            points: 135 - i * 1.2,
+                            judges: [18.0, 17.5, 18.0, 17.5, 18.0],
+                            judgePoints: 54.0,
+                            windCompensation: -1.5,
+                            windAverage: 0.8,
+                            gate: 9,
+                            gateCompensation: 1.2,
+                            totalCompensation: -0.3
+                        }] : [])
+                    ]
+                };
+            }),
             nextJumpInMilliseconds: 4500,
             nextJumperId: "cj30",
         },
@@ -100,6 +121,7 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
             judgePoints: 54.5,
             windCompensation: 1.2,
             windAverage: -0.3,
+            gate: 10,
             gateCompensation: 0.0,
             totalCompensation: 1.2,
         },
