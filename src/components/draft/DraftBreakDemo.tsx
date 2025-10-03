@@ -49,6 +49,7 @@ export const DraftBreakDemo = ({ onBack }: DraftBreakDemoProps) => {
                 distance: 120 + (i % 15),
                 points: 20 + (i % 10),
                 windAverage: 0.5,
+                gate: 20,
                 totalCompensation: 0,
             };
             return {
@@ -71,7 +72,14 @@ export const DraftBreakDemo = ({ onBack }: DraftBreakDemoProps) => {
         }));
 
         const header: GameHeaderDto = {
-            hillId: null,
+            hill: {
+                name: 'Wielka Krokiew',
+                location: 'Zakopane',
+                k: 125,
+                hs: 140,
+                countryFisCode: 'POL',
+                alpha2Code: 'pl'
+            },
             players,
             jumpers,
             competitionJumpers,

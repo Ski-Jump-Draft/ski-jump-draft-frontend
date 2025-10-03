@@ -13,6 +13,7 @@ const mockPlayers: PlayerWithBotFlagDto[] = [
 // Mock CompetitionDto with startlist
 const mockCompetition = {
     status: 'RoundInProgress' as const,
+    roundIndex: 1,
     startlist: [
         { bib: 1, done: true, competitionJumperId: 'comp-j1' },
         { bib: 2, done: true, competitionJumperId: 'comp-j2' },
@@ -140,6 +141,7 @@ const mockCurrentJumperDetails: JumperDetailsDto = {
         judgePoints: 54,
         windCompensation: -2.0,
         windAverage: 0.1,
+        gate: 0,
         gateCompensation: 0,
         totalCompensation: -2.0
     }
