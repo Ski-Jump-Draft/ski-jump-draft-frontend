@@ -113,7 +113,7 @@ export function JumpResultTooltip({ round, className, children, startingGate, ju
                 <div
                     ref={tooltipRef}
                     className={cn(
-                        "absolute z-[9999] left-1/2 transform -translate-x-1/2 w-56 rounded-lg border border-gray-600 bg-gray-700 shadow-xl text-sm",
+                        "absolute z-[99999] left-1/2 transform -translate-x-1/2 w-56 rounded-lg border border-gray-600 bg-gray-700 shadow-xl text-sm",
                         position === 'bottom' ? "top-full mt-2" : "bottom-full mb-2"
                     )}
                 >
