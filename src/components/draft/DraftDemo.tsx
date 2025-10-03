@@ -81,7 +81,14 @@ export const DraftDemo = ({ onBack }: DraftDemoProps) => {
         }));
 
         const header: GameHeaderDto = {
-            hillId: null,
+            hill: {
+                name: 'Wielka Krokiew',
+                location: 'Zakopane',
+                k: 125,
+                hs: 140,
+                countryFisCode: 'POL',
+                alpha2Code: 'pl'
+            },
             players,
             jumpers,
             competitionJumpers,
@@ -112,9 +119,12 @@ export const DraftDemo = ({ onBack }: DraftDemoProps) => {
             break: null,
             ended: null,
             lastCompetitionState: {
-                gateState: { starting: 20 }, // Starting gate for tooltip comparison
+                gateState: { starting: 20, currentJury: 20, coachReduction: 0 }, // Starting gate for tooltip comparison
                 results: results,
                 startlist: [],
+                status: 'RoundInProgress',
+                roundIndex: 1,
+                nextJumpInMilliseconds: null,
             },
             lastCompetitionResultDto: null,
         };

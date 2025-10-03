@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { HubConnectionBuilder } from '@microsoft/signalr';
 import { GameUpdatedDto } from '@/types/game';
 
 export interface GameStartedAfterMatchmakingEvent {
