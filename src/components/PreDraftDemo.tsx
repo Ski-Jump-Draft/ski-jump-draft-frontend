@@ -143,7 +143,7 @@ const mockCurrentJumperDetails: JumperDetailsDto = {
         windAverage: 0.1,
         gate: 0,
         gateCompensation: 0,
-        totalCompensation: -2.0
+        totalCompensation: -5.0
     }
 };
 

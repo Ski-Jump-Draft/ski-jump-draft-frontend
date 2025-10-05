@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ski Jump Draft",
-  description: "Test fontów",
+  description: "Gra polegająca na wybraniu drużyny skoczków narciarskich, którzy będą występowali w konkursie wyłaniającym zwycięzce \"Draftu\". Całość jest poprzedzona sesjami treningowymi, gdzie poszczególni skoczkowie prezentują swoje umiejetności.",
 };
 
 export default function RootLayout({
