@@ -55,6 +55,13 @@ export default function HomePage() {
   const [busy, setBusy] = useState(false);
   const [endedAt, setEndedAt] = useState<number>(0);
   const [joinError, setJoinError] = useState<JoinError | null>(null);
+  const [players, setPlayers] = useState<Array<{ playerId: string; nick: string; isBot: boolean; joinedAt: string }>>([]);
+  const [minPlayers, setMinPlayers] = useState<number>(0);
+  const [forceEndAt, setForceEndAt] = useState<string | null>(null);
+  const [shouldEndAcceleratedAt, setShouldEndAcceleratedAt] = useState<string | null>(null);
+  const [endAfterNoUpdate, setEndAfterNoUpdate] = useState<boolean>(false);
+  const [recentJoins, setRecentJoins] = useState<Array<{ playerId: string; nick: string; isBot: boolean; joinedAt: string }>>([]);
+  const [recentLeaves, setRecentLeaves] = useState<Array<{ playerId: string; nick: string; isBot: boolean; joinedAt: string }>>([]);
 
   /* game-hub */
   const [gameHubId, setGameHubId] = useState<string | null>(null);
@@ -174,6 +181,11 @@ export default function HomePage() {
   useMatchmakingState(matchmakingId, s => {
     setCurrent(s.playersCount);
     setMax(s.maxPlayers);
+    setMinPlayers(s.minPlayers);
+    setPlayers(s.players ?? []);
+    setForceEndAt(s.forceEndAt ?? null);
+    setShouldEndAcceleratedAt(s.shouldEndAcceleratedAt ?? null);
+    setEndAfterNoUpdate(s.endAfterNoUpdate ?? false);
 
     if (s.status === "Running") {
       setStatus("waiting");
@@ -181,17 +193,30 @@ export default function HomePage() {
       setStatus("starting");
       setEndedAt(Date.now());
       setWaitingForGameStart(true);
-      // Don't set gameHubId here - wait for GameStartedAfterMatchmaking event
       const t = setTimeout(() => {
         setDialogOpen(false);
         setScreen("transition1");
         console.log("Matchmaking ended, switching to transition1 screen");
-        // Don't set matchmakingId to null here - keep it for SignalR
-      }, 2000);
+      }, 1200);
       return () => clearTimeout(t);
     } else if (s.status === "Ended NotEnoughPlayers" || s.status === "Failed") {
       setStatus("failed");
       setReason(s.failReason ?? (s.status === "Ended NotEnoughPlayers" ? "Not enough players" : "Matchmaking failed"));
+    }
+  }, {
+    onPlayerJoined: (p) => {
+      setRecentJoins(prev => [...prev, p]);
+      // Auto-clear after 3 seconds
+      setTimeout(() => {
+        setRecentJoins(prev => prev.filter(player => player.playerId !== p.playerId));
+      }, 3000);
+    },
+    onPlayerLeft: (p) => {
+      setRecentLeaves(prev => [...prev, p]);
+      // Auto-clear after 3 seconds
+      setTimeout(() => {
+        setRecentLeaves(prev => prev.filter(player => player.playerId !== p.playerId));
+      }, 3000);
     }
   });
 
@@ -375,6 +400,10 @@ export default function HomePage() {
       const snapshot = await getMatchmaking(info.matchmakingId);
       setCurrent(snapshot.playersCount);
       setMax(snapshot.maxPlayers);
+      setMinPlayers(snapshot.minPlayers);
+      setPlayers(snapshot.players || []);
+      setForceEndAt(snapshot.forceEndAt || null);
+      setShouldEndAcceleratedAt(snapshot.shouldEndAcceleratedAt || null);
 
       // Map new statuses to old UI statuses
       let uiStatus: "idle" | "waiting" | "starting" | "failed" = "waiting";
@@ -388,18 +417,30 @@ export default function HomePage() {
 
       setStatus(uiStatus);
       setDialogOpen(true);
+      console.log('MatchmakingDialog: Opening dialog with status:', uiStatus, 'dialogOpen:', true);
 
     } catch (error) {
+      let errorMessage = "Nie udało się dołączyć do matchmakingu. Spróbuj ponownie.";
+
       if (error && typeof error === 'object' && 'error' in error) {
         // This is a JoinError from our API
-        setJoinError(error as JoinError);
+        const joinError = error as JoinError;
+        setJoinError(joinError);
+        errorMessage = joinError.message;
       } else {
         // Generic error
-        setJoinError({
+        const genericError: JoinError = {
           error: 'ServerError',
-          message: 'Nie udało się dołączyć do matchmakingu. Spróbuj ponownie.'
-        });
+          message: errorMessage
+        };
+        setJoinError(genericError);
       }
+
+      // Show dialog even on error so user can see the error message
+      setStatus("failed");
+      setReason(errorMessage);
+      setDialogOpen(true);
+      console.log('MatchmakingDialog: Opening error dialog with message:', errorMessage, 'dialogOpen:', true);
     } finally {
       setBusy(false);
     }
@@ -417,7 +458,6 @@ export default function HomePage() {
   const hardReset = () => {
     setMatchmakingId(null); setPlayerId(null); setPlayerNick(null); setGameHubId(null);
     setCurrent(0); setMax(0);
-    setStatus("idle"); setReason(undefined);
     setDialogOpen(false); setBusy(false);
     setEndedAt(0);
     setGameData(null); setGameStatus(null);
@@ -427,6 +467,15 @@ export default function HomePage() {
     setIsDemo(false);
     setPreDraftEndedAt(null);
     setMyDraftedJumperIds([]);
+    setRecentJoins([]);
+    setRecentLeaves([]);
+    setEndAfterNoUpdate(false);
+
+    // Reset status and reason after a delay to prevent flash
+    setTimeout(() => {
+      setStatus("idle");
+      setReason(undefined);
+    }, 200);
     // setShouldConnectToGameHub(false); // REMOVED
   };
 
@@ -570,50 +619,30 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Error display */}
-              {joinError && (
-                <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 backdrop-blur-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-red-400 font-semibold text-sm mb-1">
-                        {joinError.error === 'MultipleGamesNotSupported' && 'Gra już trwa'}
-                        {joinError.error === 'AlreadyJoined' && 'Już dołączyłeś'}
-                        {joinError.error === 'RoomIsFull' && 'Pokój pełny'}
-                        {joinError.error === 'ServerError' && 'Błąd serwera'}
-                      </h3>
-                      <p className="text-red-300/80 text-sm leading-relaxed">{joinError.message}</p>
-                    </div>
-                    <button
-                      onClick={() => setJoinError(null)}
-                      className="flex-shrink-0 text-red-400/60 hover:text-red-300 transition-colors p-1 rounded-lg hover:bg-red-500/10"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
-          <MatchmakingDialog
-            open={dialogOpen}
-            current={current}
-            max={max}
-            status={status === "starting" ? "starting" : status === "failed" ? "failed" : "waiting"}
-            reason={reason}
-            onCancel={abort}
-            busy={busy}
-          />
           <Toaster richColors />
         </div>
       )}
+
+      {/* Matchmaking Dialog - always visible when open */}
+      <MatchmakingDialog
+        open={dialogOpen}
+        current={current}
+        max={max}
+        min={minPlayers}
+        status={status === "starting" ? "starting" : status === "failed" ? "failed" : "waiting"}
+        reason={reason}
+        onCancel={abort}
+        busy={busy}
+        forceEndAt={forceEndAt}
+        shouldEndAcceleratedAt={shouldEndAcceleratedAt}
+        endAfterNoUpdate={endAfterNoUpdate}
+        players={status === "failed" ? [] : players}
+        recentJoins={status === "failed" ? [] : recentJoins}
+        recentLeaves={status === "failed" ? [] : recentLeaves}
+      />
 
       {/* Transition screens */}
       <TransitionScreen

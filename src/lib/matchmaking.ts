@@ -1,3 +1,5 @@
+import { MatchmakingUpdatedDto } from '@/types/matchmaking';
+
 const API = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5150').replace(/\/$/, '');
 
 export interface JoinResponse {
@@ -10,10 +12,18 @@ export interface MatchmakingSnapshot {
     status: string;
     failReason?: string | null;
     playersCount: number;
-    minRequiredPlayers?: number | null;
+    requiredPlayersToMin?: number | null; // renamed from MinRequiredPlayers
     minPlayers: number;
     maxPlayers: number;
-    remainingTime?: string | null; // przyjdzie z backendu jako ISO albo "00:01:59"
+    players?: {
+        playerId: string;
+        nick: string;
+        isBot: boolean;
+    }[];
+    startedAt?: string | null;
+    forceEndAt?: string | null; // ISO end deadline
+    endedAt?: string | null;
+    shouldEndAcceleratedAt?: string | null;
 }
 
 export interface GameStartedResponse {
@@ -22,12 +32,13 @@ export interface GameStartedResponse {
     playersMapping: Record<string, string>; // matchmakingPlayerId -> gamePlayerId
 }
 
-export async function getMatchmaking(matchmakingId: string): Promise<MatchmakingSnapshot> {
+export async function getMatchmaking(matchmakingId: string): Promise<MatchmakingUpdatedDto> {
     const res = await fetch(`${API}/matchmaking?matchmakingId=${matchmakingId}`);
     if (!res.ok) {
         throw new Error(`get matchmaking failed: ${res.statusText}`);
     }
-    return res.json();
+    const result = await res.json();
+    return result.matchmakingUpdatedDto;
 }
 
 export interface JoinError {
