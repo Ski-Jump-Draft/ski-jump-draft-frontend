@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { GameUpdatedDto, PreDraftDto, StartlistEntryDto, PlayerWithBotFlagDto, JumperDetailsDto, PreDraftSessionDto } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Bot, User, Clock, Flag } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
+import { StartList, StartListEntry } from '@/components/ui/StartList';
 
 interface PreDraftScreenProps {
     gameData: GameUpdatedDto;
@@ -93,6 +94,7 @@ export function PreDraftScreen({
         }
     }, [gameData.lastCompetitionResultDto?.competitionJumperId, lastHighlightedJumper]);
 
+
     // Mock current jumper ID for demonstration
     const currentJumperId = currentJumperDetails?.gameJumperId;
 
@@ -118,6 +120,15 @@ export function PreDraftScreen({
     const nextJumperDisplay = nextJumperInfo
         ? { name: nextJumperInfo.name, surname: nextJumperInfo.surname, countryFisCode: nextJumperInfo.countryFisCode }
         : undefined;
+
+    // Convert PreDraft startlist to StartList format
+    const startListEntries: StartListEntry[] = startlist.map(entry => ({
+        bib: entry.bib,
+        jumperId: entry.jumperId,
+        countryFisCode: entry.countryFisCode,
+        name: entry.name,
+        surname: entry.surname
+    }));
 
     return (
         <div className="min-h-screen bg-background p-4 lg:p-6 flex flex-col">
@@ -170,49 +181,15 @@ export function PreDraftScreen({
             <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-y-auto lg:overflow-hidden">
                 {/* Left Sidebar - Start List & Players */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col h-full">
-                    {/* Start List - 3/5 of height */}
-                    <Card className={`p-3 lg:p-4 flex flex-col ${isCompetitionEnded || gameData.status === "Break PreDraft" ? 'opacity-50' : ''}`} style={{ height: '60%', maxHeight: '60vh' }}>
-                        <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Lista startowa</h3>
-                        <div className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto">
-                            {startlist.map((entry, index) => {
-                                // In real data, nextJumperId is already competitionJumperId
-                                const nextJumperId = gameData.preDraft?.competition?.nextJumperId;
-                                const isNextJumper = entry.jumperId === nextJumperId;
-                                // Check if jumper completed in current round (not in selected session)
-                                const isCompleted = gameData.preDraft?.competition?.results.some(r => r.competitionJumperId === entry.jumperId);
-
-
-                                return (
-                                    <div
-                                        key={`startlist-${entry.jumperId}`}
-                                        className={`flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-lg transition-colors ${isNextJumper
-                                            ? 'bg-slate-500/15 border border-slate-400/30'
-                                            : isCompleted
-                                                ? 'opacity-50 hover:bg-muted/30'
-                                                : 'hover:bg-muted/50'
-                                            }`}
-                                    >
-                                        <span className={`text-xs lg:text-sm font-mono w-5 lg:w-6 ${isNextJumper ? 'text-slate-300 font-semibold' :
-                                            isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'
-                                            }`}>
-                                            {entry.bib}
-                                        </span>
-                                        <img
-                                            src={getCountryFlag(entry.countryFisCode)}
-                                            alt={entry.countryFisCode}
-                                            className={`w-5 h-3 lg:w-6 lg:h-4 object-cover rounded ${isCompleted ? 'opacity-50' : ''
-                                                }`}
-                                        />
-                                        <span className={`text-xs lg:text-sm font-medium flex-1 truncate ${isNextJumper ? 'text-slate-300 font-semibold' :
-                                            isCompleted ? 'text-muted-foreground' : 'text-foreground'
-                                            }`}>
-                                            {entry.name} {entry.surname}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </Card>
+                    <StartList
+                        entries={startListEntries}
+                        nextJumperId={nextJumperId}
+                        isCompleted={(entry) =>
+                            gameData.preDraft?.competition?.results.some(r => r.competitionJumperId === entry.jumperId) || false
+                        }
+                        isCompetitionEnded={isCompetitionEnded || gameData.status === "Break PreDraft"}
+                        lastJumpId={gameData.lastCompetitionResultDto?.competitionJumperId}
+                    />
 
                     {/* Players - 2/5 of height */}
                     <Card className="p-3 lg:p-4 flex flex-col" style={{ height: '40%', maxHeight: '40vh' }}>
