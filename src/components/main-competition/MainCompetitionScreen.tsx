@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { GameUpdatedDto, StartlistEntryDto, PlayerWithBotFlagDto, JumperDetailsDto, CompetitionDto } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { cn } from '@/lib/utils';
 import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
+import { StartList, StartListEntry } from '@/components/ui/StartList';
 
 interface MainCompetitionScreenProps {
     gameData: GameUpdatedDto;
@@ -68,6 +69,7 @@ export function MainCompetitionScreen({
             return () => clearTimeout(timer);
         }
     }, [gameData.lastCompetitionResultDto?.competitionJumperId, lastHighlightedJumper]);
+
 
 
     const getCountryFlag = (countryCode: string) => {
@@ -159,43 +161,15 @@ export function MainCompetitionScreen({
             <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-y-auto lg:overflow-hidden">
                 {/* Left Sidebar - Start List & Players */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col h-full">
-                    <Card className={`p-3 lg:p-4 flex flex-col ${isCompetitionEnded ? 'opacity-50' : ''}`} style={{ height: '60%', maxHeight: '60vh' }}>
-                        <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Lista startowa</h3>
-                        <div className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto custom-scrollbar">
-                            {(competition?.startlist ?? []).map((entry) => {
-                                const jumperInfo = gameData.header.competitionJumpers.find(j => j.competitionJumperId === entry.competitionJumperId);
-                                if (!jumperInfo) return null;
-
-                                const isNextJumper = entry.competitionJumperId === nextJumperId;
-                                const isCompleted = entry.done;
-
-                                const isMyJumper = myPicks.includes(jumperInfo.gameJumperId);
-
-                                return (
-                                    <div
-                                        key={`startlist-${entry.competitionJumperId}`}
-                                        className={cn(`flex items-center gap-2 lg:gap-3 p-1.5 lg:p-2 rounded-lg transition-colors`,
-                                            isNextJumper && 'bg-slate-500/15 border border-slate-400/30',
-                                            isCompleted && 'opacity-50',
-                                            isMyJumper && !isCompleted && 'bg-purple-500/10'
-                                        )}
-                                    >
-                                        <span className={`text-xs lg:text-sm font-mono w-5 lg:w-6 ${isNextJumper ? 'text-slate-300 font-semibold' : 'text-muted-foreground'}`}>
-                                            {entry.bib}
-                                        </span>
-                                        <img
-                                            src={getCountryFlag(jumperInfo.countryFisCode)}
-                                            alt={jumperInfo.countryFisCode}
-                                            className={`w-5 h-3 lg:w-6 lg:h-4 object-cover rounded ${isCompleted ? 'opacity-50' : ''}`}
-                                        />
-                                        <span className={`text-xs lg:text-sm font-medium flex-1 truncate ${isNextJumper ? 'text-slate-300 font-semibold' : 'text-foreground'}`}>
-                                            {jumperInfo.name} {jumperInfo.surname}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </Card>
+                    <StartList
+                        entries={competition?.startlist ?? []}
+                        jumperInfos={gameData.header.competitionJumpers}
+                        nextJumperId={nextJumperId}
+                        isCompleted={(entry) => entry.done || false}
+                        myPicks={myPicks}
+                        isCompetitionEnded={isCompetitionEnded}
+                        lastJumpId={gameData.lastCompetitionResultDto?.competitionJumperId}
+                    />
 
                     <Card className="p-3 lg:p-4 flex flex-col" style={{ height: '40%', maxHeight: '40vh' }}>
                         <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Gracze</h3>
