@@ -308,7 +308,6 @@ export function MainCompetitionScreen({
                                                             ) : (
                                                                 <div className={cn(`flex items-center gap-4 p-3 rounded-lg`,
                                                                     isMyJumper && 'bg-purple-600/20',
-                                                                    isOthersJumper && 'bg-yellow-100/10',
                                                                     hasLessJumps && 'opacity-60'
                                                                 )}>
                                                                     <span className="text-sm font-mono text-muted-foreground w-8 text-center">{result.rank}</span>
