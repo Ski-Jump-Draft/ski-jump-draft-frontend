@@ -10,9 +10,10 @@ interface JumpResultTooltipProps {
     startingGate?: number; // Only need starting gate for comparison
     jumperInfo?: { name: string; surname: string; countryFisCode: string; bib?: number };
     roundIndex?: number; // Optional round index to show "Runda N" in tooltip
+    pickedBy?: string | null; // Nick of the player who picked this jumper
 }
 
-export function JumpResultTooltip({ round, className, children, startingGate, jumperInfo, roundIndex }: JumpResultTooltipProps) {
+export function JumpResultTooltip({ round, className, children, startingGate, jumperInfo, roundIndex, pickedBy }: JumpResultTooltipProps) {
     const [open, setOpen] = useState(false);
     const [position, setPosition] = useState<'bottom' | 'top'>('bottom');
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -119,27 +120,37 @@ export function JumpResultTooltip({ round, className, children, startingGate, ju
                 >
                     {/* Header with jumper info */}
                     {jumperInfo && (
-                        <div className="flex items-center justify-between px-3 pt-3 pb-2 border-b border-gray-500">
-                            <div className="flex items-center gap-2">
-                                <img
-                                    src={`/flags/${fisToAlpha2(jumperInfo.countryFisCode) || 'xx'}.svg`}
-                                    alt={jumperInfo.countryFisCode}
-                                    className="w-5 h-3 object-cover rounded"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                                <span className="font-bold text-gray-100 text-base">
-                                    {jumperInfo.name} {jumperInfo.surname}
-                                </span>
+                        <div className="border-b border-gray-500">
+                            <div className="flex items-center justify-between px-3 pt-3 pb-2">
+                                <div className="flex items-center gap-2">
+                                    <img
+                                        src={`/flags/${fisToAlpha2(jumperInfo.countryFisCode) || 'xx'}.svg`}
+                                        alt={jumperInfo.countryFisCode}
+                                        className="w-5 h-3 object-cover rounded"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                    <span className="font-bold text-gray-100 text-base">
+                                        {jumperInfo.name} {jumperInfo.surname}
+                                    </span>
+                                </div>
+                                {jumperInfo.bib && (
+                                    <span
+                                        className="text-gray-300 font-semibold text-sm"
+                                        title="Numer startowy"
+                                    >
+                                        {jumperInfo.bib}
+                                    </span>
+                                )}
                             </div>
-                            {jumperInfo.bib && (
-                                <span
-                                    className="text-gray-300 font-semibold text-sm"
-                                    title="Numer startowy"
-                                >
-                                    {jumperInfo.bib}
-                                </span>
+                            {pickedBy && (
+                                <div className="px-3 pb-2">
+                                    <span className="text-xs text-gray-400">Wybrany przez: </span>
+                                    <span className="text-xs text-purple-400 font-medium truncate max-w-[180px] inline-block align-bottom">
+                                        {pickedBy}
+                                    </span>
+                                </div>
                             )}
                         </div>
                     )}
