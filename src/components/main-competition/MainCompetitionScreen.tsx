@@ -1,22 +1,25 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { GameUpdatedDto, StartlistEntryDto, PlayerWithBotFlagDto, JumperDetailsDto, CompetitionDto } from '@/types/game';
+import { GameUpdatedDto, StartlistEntryDto, PlayerWithBotFlagDto, JumperDetailsDto, CompetitionDto, GameJumperDto } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { fisToAlpha2 } from '@/utils/countryCodes';
-import { Bot, User, Clock, Flag, Trophy, Info } from 'lucide-react';
+import { Clock, Flag, Trophy, Info } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
 import { StartList, StartListEntry } from '@/components/ui/StartList';
+import { PlayerPicksTooltip } from '@/components/ui/PlayerPicksTooltip';
+import { PlayersList } from '@/components/ui/PlayersList';
 
 interface MainCompetitionScreenProps {
     gameData: GameUpdatedDto;
     myDraftedJumperIds: string[];
+    allDraftPicks?: Array<{ playerId: string; jumperIds: string[] }>;
     myPlayerId: string;
     isEnded?: boolean;
     onBack?: () => void; // For demo mode
@@ -25,6 +28,7 @@ interface MainCompetitionScreenProps {
 export function MainCompetitionScreen({
     gameData,
     myDraftedJumperIds,
+    allDraftPicks,
     myPlayerId,
     isEnded,
     onBack
@@ -88,7 +92,16 @@ export function MainCompetitionScreen({
     const jumpersRemainingInSession = competition?.startlist.filter(j => !j.done).length ?? 0;
 
     const myPicks = myDraftedJumperIds;
-    const otherPicks = gameData.draft?.picks.filter(p => p.playerId !== myPlayerId).flatMap(p => p.jumperIds) ?? [];
+    // Use allDraftPicks as fallback
+    const picks = gameData.draft?.picks || allDraftPicks || [];
+
+    // Helper function to find who picked a jumper
+    const getPickedBy = (gameJumperId: string): string | null => {
+        const pick = picks.find(p => p.jumperIds.includes(gameJumperId));
+        if (!pick) return null;
+        const player = gameData.header.players.find(p => p.playerId === pick.playerId);
+        return player?.nick || null;
+    };
 
     const lastJumpResult = gameData.lastCompetitionResultDto;
     const lastJumperDetails = lastJumpResult
@@ -171,21 +184,27 @@ export function MainCompetitionScreen({
                         lastJumpId={gameData.lastCompetitionResultDto?.competitionJumperId}
                     />
 
-                    <Card className="p-3 lg:p-4 flex flex-col" style={{ height: '40%', maxHeight: '40vh' }}>
-                        <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Gracze</h3>
-                        <div className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto custom-scrollbar">
-                            {players.map((player) => (
-                                <div key={player.playerId} className="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                                    {player.isBot ? (
-                                        <Bot className="w-4 h-4 lg:w-5 lg:h-5 text-blue-400" />
-                                    ) : (
-                                        <User className="w-4 h-4 lg:w-5 lg:h-5 text-green-400" />
-                                    )}
-                                    <span className="text-sm lg:font-medium text-foreground truncate">{player.nick}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
+                    <PlayersList
+                        players={players}
+                        renderPlayer={(player, defaultContent) => {
+                            // Get jumpers picked by this player
+                            // Use allDraftPicks as fallback if gameData.draft?.picks is not available
+                            const picks = gameData.draft?.picks || allDraftPicks || [];
+                            const playerPicks = picks.find(p => p.playerId === player.playerId);
+                            const playerJumpers = playerPicks?.jumperIds
+                                .map(jumperId => gameData.header.jumpers.find(j => j.gameJumperId === jumperId))
+                                .filter((j): j is GameJumperDto => j !== undefined) || [];
+
+                            return (
+                                <PlayerPicksTooltip
+                                    playerNick={player.nick}
+                                    jumpers={playerJumpers}
+                                >
+                                    {defaultContent}
+                                </PlayerPicksTooltip>
+                            );
+                        }}
+                    />
                 </div>
 
                 {/* Center - Results Table */}
@@ -220,7 +239,6 @@ export function MainCompetitionScreen({
                                                     );
 
                                                     const isMyJumper = myPicks.includes(jumper?.gameJumperId ?? '');
-                                                    const isOthersJumper = otherPicks.includes(jumper?.gameJumperId ?? '');
                                                     const hasLessJumps = competition?.roundIndex != null && result.rounds.length < competition.roundIndex + 1;
                                                     const isLastAdded = result.competitionJumperId === lastHighlightedJumper;
 
@@ -235,11 +253,11 @@ export function MainCompetitionScreen({
                                                                     round={result.rounds[result.rounds.length - 1]}
                                                                     startingGate={competition?.gateState?.starting}
                                                                     jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode, bib: result.bib } : undefined}
+                                                                    pickedBy={jumper ? getPickedBy(jumper.gameJumperId) : null}
                                                                     className="block"
                                                                 >
                                                                     <div className={cn(`flex items-center gap-4 p-3 rounded-lg`,
                                                                         isMyJumper && 'bg-purple-600/20',
-                                                                        isOthersJumper && 'bg-yellow-100/10',
                                                                         hasLessJumps && 'opacity-60'
                                                                     )}>
                                                                         <span className="text-sm font-mono text-muted-foreground w-8 text-center">{result.rank}</span>
@@ -262,6 +280,7 @@ export function MainCompetitionScreen({
                                                                                         round={result.rounds[i]}
                                                                                         startingGate={competition?.gateState?.starting}
                                                                                         jumperInfo={jumper ? { name: jumper.name, surname: jumper.surname, countryFisCode: jumper.countryFisCode, bib: result.bib } : undefined}
+                                                                                        pickedBy={jumper ? getPickedBy(jumper.gameJumperId) : null}
                                                                                         roundIndex={i}
                                                                                         className="block"
                                                                                     >

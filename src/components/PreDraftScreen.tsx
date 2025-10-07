@@ -6,11 +6,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { fisToAlpha2 } from '@/utils/countryCodes';
-import { Bot, User, Clock, Flag } from 'lucide-react';
+import { Clock, Flag } from 'lucide-react';
 import { SimplePhaseTimer } from '@/components/ui/SimplePhaseTimer';
 import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
 import { StartList, StartListEntry } from '@/components/ui/StartList';
+import { PlayersList } from '@/components/ui/PlayersList';
 
 interface PreDraftScreenProps {
     gameData: GameUpdatedDto;
@@ -192,21 +193,7 @@ export function PreDraftScreen({
                     />
 
                     {/* Players - 2/5 of height */}
-                    <Card className="p-3 lg:p-4 flex flex-col" style={{ height: '40%', maxHeight: '40vh' }}>
-                        <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">Gracze</h3>
-                        <div className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto">
-                            {players.map((player) => (
-                                <div key={player.playerId} className="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                                    {player.isBot ? (
-                                        <Bot className="w-4 h-4 lg:w-5 lg:h-5 text-blue-400" />
-                                    ) : (
-                                        <User className="w-4 h-4 lg:w-5 lg:h-5 text-green-400" />
-                                    )}
-                                    <span className="text-sm lg:font-medium text-foreground truncate">{player.nick}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
+                    <PlayersList players={players} />
                 </div>
 
                 {/* Center - Results Table */}

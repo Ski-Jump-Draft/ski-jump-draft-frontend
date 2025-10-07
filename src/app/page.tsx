@@ -79,6 +79,7 @@ export default function HomePage() {
   const [showGameEndedDemo, setShowGameEndedDemo] = useState(false);
   const [showMainCompetitionDemo, setShowMainCompetitionDemo] = useState(false);
   const [myDraftedJumperIds, setMyDraftedJumperIds] = useState<string[]>([]);
+  const [allDraftPicks, setAllDraftPicks] = useState<Array<{ playerId: string; jumperIds: string[] }>>([]);
   const [isClient, setIsClient] = useState(false);
   const [snowflakes] = useState<Array<{
     size: number;
@@ -115,6 +116,11 @@ export default function HomePage() {
       const myPicks = gameData.draft.picks.find(p => p.playerId === playerId)?.jumperIds;
       if (myPicks) {
         setMyDraftedJumperIds(myPicks);
+      }
+
+      // Save all picks for later use in MainCompetition
+      if (gameData.draft.picks.length > 0) {
+        setAllDraftPicks(gameData.draft.picks);
       }
     }
   }, [gameData?.draft?.picks, playerId]);
@@ -467,6 +473,7 @@ export default function HomePage() {
     setIsDemo(false);
     setPreDraftEndedAt(null);
     setMyDraftedJumperIds([]);
+    setAllDraftPicks([]);
     setRecentJoins([]);
     setRecentLeaves([]);
     setEndAfterNoUpdate(false);
@@ -746,6 +753,7 @@ export default function HomePage() {
               gameData={gameData}
               myPlayerId={playerId!}
               myDraftedJumperIds={myDraftedJumperIds}
+              allDraftPicks={allDraftPicks}
               isEnded={gameData.status === 'Break Ended' || gameData.status === 'Ended'}
             />
           </div>

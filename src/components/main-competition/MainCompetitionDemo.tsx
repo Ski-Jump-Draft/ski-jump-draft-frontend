@@ -28,7 +28,13 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
                 { playerId: "player3", nick: "Bot Adam", isBot: true },
                 { playerId: "player4", nick: "Bot Piotr", isBot: true },
             ],
-            jumpers: [], // Not essential for this screen's UI logic directly
+            jumpers: Array.from({ length: 50 }, (_, i) => ({
+                gameJumperId: `j${i + 1}`,
+                gameWorldJumperId: `gwj${i + 1}`,
+                name: `Jumper`,
+                surname: `#${i + 1}`,
+                countryFisCode: ["POL", "NOR", "GER", "AUT", "SLO", "JPN"][i % 6],
+            })),
             competitionJumpers: Array.from({ length: 50 }, (_, i) => ({
                 gameJumperId: `j${i + 1}`,
                 competitionJumperId: `cj${i + 1}`,
@@ -45,10 +51,10 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
             ended: true,
             orderPolicy: "Classic",
             picks: [
-                { playerId: "player1", jumperIds: ["j1", "j3", "j5", "j7", "j9"] },
-                { playerId: "player2", jumperIds: ["j2", "j4", "j6", "j8", "j10"] },
-                { playerId: "player3", jumperIds: ["j11", "j13", "j15", "j17", "j19"] },
-                { playerId: "player4", jumperIds: ["j12", "j14", "j16", "j18", "j20"] },
+                { playerId: "player1", jumperIds: ["j50", "j48", "j46", "j44", "j42", "j40", "j38", "j36", "j34", "j32"] }, // Top jumpers
+                { playerId: "player2", jumperIds: ["j49", "j47", "j45", "j43", "j41", "j39", "j37", "j35", "j33", "j31"] }, // Second best
+                { playerId: "player3", jumperIds: ["j30", "j28", "j26", "j24", "j22", "j20", "j18", "j16", "j14", "j12"] },
+                { playerId: "player4", jumperIds: ["j29", "j27", "j25", "j23", "j21", "j19", "j17", "j15", "j13", "j11"] },
             ],
             availableJumpers: [],
             nextPlayers: [],
@@ -131,7 +137,8 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
         <MainCompetitionScreen
             gameData={mockGameData}
             myPlayerId="player1"
-            myDraftedJumperIds={["j1", "j3", "j5", "j7", "j9"]}
+            myDraftedJumperIds={["j50", "j48", "j46", "j44", "j42", "j40", "j38", "j36", "j34", "j32"]}
+            allDraftPicks={mockGameData.draft?.picks}
             onBack={onBack}
         />
     );
