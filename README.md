@@ -1,6 +1,6 @@
 # Ski Jump Draft — Frontend
 
-🎮 **Play now:** https://skijumpdraft.com  
+🎮 **Play now:** https://ski-jump-draft.netlify.app  
 🔗 **Backend repo:** https://github.com/ski-jump-draft/backend
 
 ## Overview
