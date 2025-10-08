@@ -105,6 +105,7 @@ export interface CompetitionDto {
     gateState: GateStateDto;
     results: CompetitionResultDto[];
     nextJumpInMilliseconds: number | null;
+    toBeatDistance?: number | null;
     nextJumperId?: string | null; // Helper property
 }
 

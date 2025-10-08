@@ -12,6 +12,7 @@ import { AnimatedJumpingText } from '@/components/ui/AnimatedJumpingText';
 import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
 import { StartList, StartListEntry } from '@/components/ui/StartList';
 import { PlayersList } from '@/components/ui/PlayersList';
+import { ToBeatDistance } from '@/components/ui/ToBeatDistance';
 
 interface PreDraftScreenProps {
     gameData: GameUpdatedDto;
@@ -293,7 +294,7 @@ export function PreDraftScreen({
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col">
                     {/* Next Jump Countdown */}
                     <Card className={`p-3 lg:p-4 flex-shrink-0 ${isCompetitionEnded || gameData.status === "Break PreDraft" ? 'opacity-50' : ''}`}>
-                        <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex items-center gap-2">
+                        <h3 className="text-base lg:text-lg font-semibold mb-0 text-foreground flex items-center gap-2">
                             <span>Następny skok:</span>
                             {nextJumperDisplay && !isCompetitionEnded && gameData.status !== "Break PreDraft" && (
                                 <>
@@ -313,8 +314,9 @@ export function PreDraftScreen({
                                 </span>
                             )}
                         </h3>
+                        <ToBeatDistance toBeatDistance={gameData.preDraft?.competition?.toBeatDistance ?? gameData.lastCompetitionState?.toBeatDistance} />
                         {!isCompetitionEnded && gameData.status !== "Break PreDraft" && (
-                            <div className="relative bg-muted rounded-lg overflow-hidden">
+                            <div className="relative bg-muted rounded-lg overflow-hidden mt-1">
                                 <div
                                     key={`progress-${gameData?.lastCompetitionResultDto?.competitionJumperId || 'initial'}`}
                                     className="h-8 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg"
