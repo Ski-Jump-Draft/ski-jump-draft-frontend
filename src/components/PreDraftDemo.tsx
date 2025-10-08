@@ -29,6 +29,7 @@ const mockCompetition = {
     gateState: { starting: 0, currentJury: 0, coachReduction: null },
     results: [],
     nextJumpInMilliseconds: 3000,
+    toBeatDistance: 138.5,
     nextJumperId: 'comp-j6' // Use competitionJumperId as in types
 };
 

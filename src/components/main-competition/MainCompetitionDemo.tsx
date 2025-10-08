@@ -72,6 +72,7 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
                 currentJury: 10,
                 coachReduction: null
             },
+            toBeatDistance: 142.3,
             results: Array.from({ length: 20 }, (_, i) => {
                 const hasSecondRound = i < 15;
                 const firstRoundPoints = 140 - i * 1.5;

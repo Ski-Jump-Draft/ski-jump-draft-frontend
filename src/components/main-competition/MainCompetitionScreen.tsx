@@ -15,6 +15,7 @@ import { JumpResultTooltip } from '@/components/ui/JumpResultTooltip';
 import { StartList, StartListEntry } from '@/components/ui/StartList';
 import { PlayerPicksTooltip } from '@/components/ui/PlayerPicksTooltip';
 import { PlayersList } from '@/components/ui/PlayersList';
+import { ToBeatDistance } from '@/components/ui/ToBeatDistance';
 
 interface MainCompetitionScreenProps {
     gameData: GameUpdatedDto;
@@ -347,7 +348,7 @@ export function MainCompetitionScreen({
                 {/* Right Sidebar - Countdown & Jumper Details */}
                 <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col">
                     <Card className={`p-3 lg:p-4 flex-shrink-0 ${isCompetitionEnded ? 'opacity-50' : ''}`}>
-                        <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex items-center gap-2">
+                        <h3 className="text-base lg:text-lg font-semibold mb-0 text-foreground flex items-center gap-2">
                             <span>Następny skok:</span>
                             {nextJumperDisplay && !isCompetitionEnded && (
                                 <>
@@ -363,8 +364,9 @@ export function MainCompetitionScreen({
                             )}
                             {isCompetitionEnded && <span className="text-muted-foreground">Konkurs zakończony</span>}
                         </h3>
+                        <ToBeatDistance toBeatDistance={competition?.toBeatDistance} />
                         {!isCompetitionEnded && (
-                            <div className="relative bg-muted rounded-lg overflow-hidden">
+                            <div className="relative bg-muted rounded-lg overflow-hidden mt-1">
                                 <div
                                     key={`progress-${gameData?.lastCompetitionResultDto?.competitionJumperId || 'initial'}`}
                                     className={cn("h-8 rounded-lg",
