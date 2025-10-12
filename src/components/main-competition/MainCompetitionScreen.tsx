@@ -140,7 +140,7 @@ export function MainCompetitionScreen({
 
 
     return (
-        <div className={cn("min-h-screen bg-background p-4 lg:p-6 flex flex-col")}>
+        <div className={cn("fixed inset-0 bg-background p-4 lg:p-6 flex flex-col overflow-y-auto lg:overflow-hidden")}>
             {/* Header */}
             <div className="mb-4 lg:mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 flex-shrink-0">
                 <div className="flex-1">
@@ -172,9 +172,9 @@ export function MainCompetitionScreen({
                 </div>
             </div>
 
-            <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-y-auto lg:overflow-hidden">
+            <div className="flex-1 lg:min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-6 lg:overflow-hidden">
                 {/* Left Sidebar - Start List & Players */}
-                <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col h-full">
+                <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col lg:h-full">
                     <StartList
                         entries={competition?.startlist ?? []}
                         jumperInfos={gameData.header.competitionJumpers}
@@ -346,7 +346,7 @@ export function MainCompetitionScreen({
                 </div>
 
                 {/* Right Sidebar - Countdown & Jumper Details */}
-                <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col">
+                <div className="lg:w-1/4 space-y-4 lg:space-y-6 flex flex-col lg:overflow-y-auto lg:h-full custom-scrollbar">
                     <Card className={`p-3 lg:p-4 flex-shrink-0 ${isCompetitionEnded ? 'opacity-50' : ''}`}>
                         <h3 className="text-base lg:text-lg font-semibold mb-0 text-foreground flex items-center gap-2">
                             <span>Następny skok:</span>

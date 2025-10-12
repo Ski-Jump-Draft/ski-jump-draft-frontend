@@ -679,21 +679,19 @@ export default function HomePage() {
           (() => {
             const mapped = mapGameDataToPreDraftProps(gameData);
             return (
-              <div className="fixed inset-0 z-50">
-                <PreDraftScreen
-                  gameData={gameData}
-                  startlist={mapped.startlist}
-                  players={mapped.players}
-                  sessions={mapped.sessions}
-                  currentJumperDetails={mapped.currentJumperDetails}
-                  nextJumpInSeconds={mapped.nextJumpInSeconds}
-                  jumpersRemainingInSession={mapped.jumpersRemainingInSession}
-                  isBreak={mapped.isBreak}
-                  breakRemainingSeconds={mapped.breakRemainingSeconds}
-                  nextStatus={mapped.nextStatus}
-                  isPreDraftEnded={preDraftEndedAt !== null}
-                />
-              </div>
+              <PreDraftScreen
+                gameData={gameData}
+                startlist={mapped.startlist}
+                players={mapped.players}
+                sessions={mapped.sessions}
+                currentJumperDetails={mapped.currentJumperDetails}
+                nextJumpInSeconds={mapped.nextJumpInSeconds}
+                jumpersRemainingInSession={mapped.jumpersRemainingInSession}
+                isBreak={mapped.isBreak}
+                breakRemainingSeconds={mapped.breakRemainingSeconds}
+                nextStatus={mapped.nextStatus}
+                isPreDraftEnded={preDraftEndedAt !== null}
+              />
             );
           })()
         ) : null
@@ -713,34 +711,30 @@ export default function HomePage() {
 
       {screen === "ended" && (
         isDemo ? (
-          <div className="fixed inset-0 z-50">
-            <GameEndedDemo onBack={() => { setIsDemo(false); hardReset(); }} />
-          </div>
+          <GameEndedDemo onBack={() => { setIsDemo(false); hardReset(); }} />
         ) : (
-          <div className="fixed inset-0 z-50">
-            {(() => {
-              if (!gameData?.ended?.ranking || !gameData?.header) return null;
-              const entries = Object.entries(gameData.ended.ranking).map(([pid, v]) => ({
-                playerId: pid,
-                nick: gameData.header.players.find(p => p.playerId === pid)?.nick ?? pid,
-                points: v.points,
-                position: v.position,
-                isMe: playerId === pid,
-              })).sort((a, b) => a.position - b.position);
-              return (
-                <GameEndedScreen
-                  results={entries}
-                  onBackToMenu={() => { hardReset(); }}
-                  policy={gameData.ended?.policy === "PodiumAtAllCosts" ? "PodiumAtAllCosts" : "Classic"}
-                  shareUrl={typeof window !== 'undefined' ? window.location.href : undefined}
-                  myPlayerId={playerId}
-                  hillName={gameData.header.hill?.name}
-                  hillHs={Math.round(gameData.header.hill?.hs ?? 0)}
-                  hillCountryCode={gameData.header.hill?.alpha2Code}
-                />
-              );
-            })()}
-          </div>
+          (() => {
+            if (!gameData?.ended?.ranking || !gameData?.header) return null;
+            const entries = Object.entries(gameData.ended.ranking).map(([pid, v]) => ({
+              playerId: pid,
+              nick: gameData.header.players.find(p => p.playerId === pid)?.nick ?? pid,
+              points: v.points,
+              position: v.position,
+              isMe: playerId === pid,
+            })).sort((a, b) => a.position - b.position);
+            return (
+              <GameEndedScreen
+                results={entries}
+                onBackToMenu={() => { hardReset(); }}
+                policy={gameData.ended?.policy === "PodiumAtAllCosts" ? "PodiumAtAllCosts" : "Classic"}
+                shareUrl={typeof window !== 'undefined' ? window.location.href : undefined}
+                myPlayerId={playerId}
+                hillName={gameData.header.hill?.name}
+                hillHs={Math.round(gameData.header.hill?.hs ?? 0)}
+                hillCountryCode={gameData.header.hill?.alpha2Code}
+              />
+            );
+          })()
         )
       )}
 
@@ -748,15 +742,13 @@ export default function HomePage() {
         isDemo ? (
           <MainCompetitionDemo onBack={() => { setIsDemo(false); hardReset(); }} />
         ) : gameData ? (
-          <div className="fixed inset-0 z-50">
-            <MainCompetitionScreen
-              gameData={gameData}
-              myPlayerId={playerId!}
-              myDraftedJumperIds={myDraftedJumperIds}
-              allDraftPicks={allDraftPicks}
-              isEnded={gameData.status === 'Break Ended' || gameData.status === 'Ended'}
-            />
-          </div>
+          <MainCompetitionScreen
+            gameData={gameData}
+            myPlayerId={playerId!}
+            myDraftedJumperIds={myDraftedJumperIds}
+            allDraftPicks={allDraftPicks}
+            isEnded={gameData.status === 'Break Ended' || gameData.status === 'Ended'}
+          />
         ) : null
       )}
     </main>
