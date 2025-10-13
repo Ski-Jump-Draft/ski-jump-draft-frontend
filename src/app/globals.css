@@ -307,3 +307,20 @@ button {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Custom placeholder styles */
+input.placeholder-gray::placeholder,
+input.placeholder-gray::-webkit-input-placeholder {
+  color: #6B7585 !important;
+  opacity: 1 !important;
+}
+
+input.placeholder-gray::-moz-placeholder {
+  color: #6B7585 !important;
+  opacity: 1 !important;
+}
+
+input.placeholder-gray:-ms-input-placeholder {
+  color: #6B7585 !important;
+  opacity: 1 !important;
+}

@@ -81,6 +81,8 @@ const mockGameData: GameUpdatedDto = {
         ],
         draftOrderPolicy: 'Classic',
         draftTimeoutInSeconds: 30,
+        draftPicksCount: 5,
+        rankingPolicy: 'Classic',
     },
     preDraft: {
         status: 'Running',

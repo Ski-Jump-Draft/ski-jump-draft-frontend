@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { GamePlayerDto } from '@/types/game';
-import { User, Bot, Info } from 'lucide-react';
+import { User, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DraftOrderProps {
@@ -80,18 +80,6 @@ export const DraftOrder = ({ players, nextPlayers, currentPlayerId, orderPolicy,
                     </div>
                 )}
             </div>
-
-            {/* Order Policy Info */}
-            {orderPolicy && orderPolicy !== 'Random' && (
-                <div className="mt-4 text-sm text-gray-400 p-2 bg-neutral-900/50 rounded-md flex items-center gap-2">
-                    <Info className="w-4 h-4 flex-shrink-0" />
-                    <span>
-                        {orderPolicy === 'Classic'
-                            ? 'System klasyczny (A, B, C, A, B, C...)'
-                            : 'System snake (A, B, C, C, B, A...)'}
-                    </span>
-                </div>
-            )}
         </Card>
     );
 };

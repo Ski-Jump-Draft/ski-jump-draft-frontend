@@ -42,12 +42,44 @@ export async function getMatchmaking(matchmakingId: string): Promise<Matchmaking
 }
 
 export interface JoinError {
-    error: 'MultipleGamesNotSupported' | 'AlreadyJoined' | 'RoomIsFull' | 'ServerError';
+    error: 'MultipleGamesNotSupported' | 'AlreadyJoined' | 'RoomIsFull' | 'InvalidPasswordException' | 'PrivateServerInUse' | 'ServerError';
     message: string;
 }
 
 export async function joinMatchmaking(nick: string): Promise<JoinResponse> {
     const res = await fetch(`${API}/matchmaking/join?nick=${encodeURIComponent(nick)}`, { method: 'POST' });
+
+    if (!res.ok) {
+        if (res.status === 409) {
+            // Conflict - specific error from backend
+            const errorData = await res.json();
+            const error: JoinError = {
+                error: errorData.error || 'ServerError',
+                message: errorData.message || 'Wystąpił błąd podczas dołączania'
+            };
+            throw error;
+        } else {
+            // Other HTTP errors
+            const error: JoinError = {
+                error: 'ServerError',
+                message: `Błąd serwera: ${res.statusText}`
+            };
+            throw error;
+        }
+    }
+
+    const d = await res.json();
+    return {
+        matchmakingId: d.matchmakingId,
+        correctedNick: d.correctedNick,
+        playerId: d.playerId,
+    };
+}
+
+export async function joinPremiumMatchmaking(nick: string, password: string): Promise<JoinResponse> {
+    const res = await fetch(`${API}/matchmaking/joinPremium?nick=${encodeURIComponent(nick)}&password=${encodeURIComponent(password)}`, {
+        method: 'POST'
+    });
 
     if (!res.ok) {
         if (res.status === 409) {

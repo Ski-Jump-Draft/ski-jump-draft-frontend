@@ -10,6 +10,8 @@ import { pickJumper } from '@/lib/gameApi';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DraftOrderEmptyState } from './DraftOrderEmptyState';
 import { SimplePhaseTimer } from '../ui/SimplePhaseTimer';
+import { ScoringPolicyDialog } from '@/components/ui/ScoringPolicyDialog';
+import { DraftGameInfo } from './DraftGameInfo';
 
 interface DraftScreenProps {
     gameData: GameUpdatedDto;
@@ -20,6 +22,7 @@ interface DraftScreenProps {
 export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftScreenProps) => {
     const [selectedJumperId, setSelectedJumperId] = useState<string | null>(null);
     const [showPickAnimation, setShowPickAnimation] = useState<string | null>(null);
+    const [scoringDialogOpen, setScoringDialogOpen] = useState(false);
 
     const { header, preDraft, endedPreDraft, draft } = gameData;
     const draftedJumperIds = draft?.picks.flatMap(p => p.jumperIds) || [];
@@ -83,6 +86,9 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
             (gameData.lastCompetitionState ? [{ results: gameData.lastCompetitionState.results }] : []));
 
     const orderPolicy = draft?.orderPolicy || gameData.header.draftOrderPolicy;
+    const policy = gameData.header.rankingPolicy || "Classic";
+    const orderPolicyName = orderPolicy === "Snake" ? "Snake" : orderPolicy === "Random" ? "Losowy" : "NIEZNANY";
+    const picksPerPlayer = header.draftPicksCount || draft?.picks?.[0]?.jumperIds?.length || 5; // Fallback to calculating from actual picks
 
     // Debug log for timer data
     if (isReadOnly && gameData.nextStatus) {
@@ -147,7 +153,8 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
                 {/* Right Column - Draft Controls */}
                 <aside className="flex-[2] flex flex-col gap-4 min-h-0">
                     <div className="flex flex-col xl:flex-row gap-4">
-                        <div className="flex-1">
+                        {/* Left column: Timer + Game Info */}
+                        <div className="flex-1 flex flex-col gap-4">
                             {draft ? (
                                 <DraftTimer
                                     key={`${draft.currentPlayerId ?? 'none'}-${totalPicksDone}`}
@@ -164,7 +171,17 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
                                     paused={true}
                                 />
                             )}
+
+                            {/* Game Info Card */}
+                            <DraftGameInfo
+                                picksPerPlayer={picksPerPlayer}
+                                orderPolicy={orderPolicy}
+                                rankingPolicy={policy}
+                                onShowScoringDetails={() => setScoringDialogOpen(true)}
+                            />
                         </div>
+
+                        {/* Right column: Draft Order */}
                         <div className="flex-1">
                             {draft ? (
                                 <div className={isDraftEnded ? 'opacity-60' : ''}>
@@ -187,6 +204,7 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
                             )}
                         </div>
                     </div>
+
                     <div className="flex-1 min-h-0">
                         <DraftPicks
                             players={header.players}
@@ -216,6 +234,12 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <ScoringPolicyDialog
+                open={scoringDialogOpen}
+                onOpenChange={setScoringDialogOpen}
+                policy={policy}
+            />
         </div>
     );
 };

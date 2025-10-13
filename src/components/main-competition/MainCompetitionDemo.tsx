@@ -14,6 +14,8 @@ export function MainCompetitionDemo({ onBack }: { onBack?: () => void }) {
         header: {
             draftOrderPolicy: "Classic",
             draftTimeoutInSeconds: 30,
+            draftPicksCount: 5,
+            rankingPolicy: "Classic",
             hill: {
                 name: "Wielka Krokiew",
                 location: "Zakopane",

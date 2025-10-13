@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { generateNickname } from "@/utils/nickname";
-import { joinMatchmaking, leaveMatchmaking, JoinResponse, getMatchmaking, JoinError } from "@/lib/matchmaking";
+import { joinMatchmaking, joinPremiumMatchmaking, leaveMatchmaking, JoinResponse, getMatchmaking, JoinError } from "@/lib/matchmaking";
 import { MatchmakingDialog } from "@/components/MatchmakingDialog";
+import { PrivateRoomDialog } from "@/components/PrivateRoomDialog";
 import { useMatchmakingState } from "@/hooks/api_streams/useMatchmakingState";
 import { TransitionScreen } from "@/components/TransitionScreen";
 import { GameHillInfoScreen } from "@/components/GameHillInfoScreen";
@@ -62,6 +63,11 @@ export default function HomePage() {
   const [endAfterNoUpdate, setEndAfterNoUpdate] = useState<boolean>(false);
   const [recentJoins, setRecentJoins] = useState<Array<{ playerId: string; nick: string; isBot: boolean; joinedAt: string }>>([]);
   const [recentLeaves, setRecentLeaves] = useState<Array<{ playerId: string; nick: string; isBot: boolean; joinedAt: string }>>([]);
+
+  /* private room */
+  const [privateRoomDialogOpen, setPrivateRoomDialogOpen] = useState(false);
+  const [privateRoomError, setPrivateRoomError] = useState<string | null>(null);
+  const [privateRoomBusy, setPrivateRoomBusy] = useState(false);
 
   /* game-hub */
   const [gameHubId, setGameHubId] = useState<string | null>(null);
@@ -452,6 +458,78 @@ export default function HomePage() {
     }
   }, [busy, nick, placeholder]);
 
+  /* ── 4b. PRYWATNY POKÓJ ── */
+  const submitPrivateRoom = useCallback(async (roomNick: string, password: string) => {
+    if (privateRoomBusy) return;
+
+    // Validate password before sending
+    if (!password || password.trim() === '') {
+      setPrivateRoomError('Musisz wpisać hasło dostępu do prywatnego pokoju.');
+      return;
+    }
+
+    setPrivateRoomBusy(true);
+    setPrivateRoomError(null);
+    setJoinError(null);
+
+    try {
+      const nickSend = roomNick.slice(0, 24);
+      const info: JoinResponse = await joinPremiumMatchmaking(nickSend, password);
+      setMatchmakingId(info.matchmakingId);
+      setPlayerId(info.playerId);
+      setPlayerNick(info.correctedNick);
+
+      const snapshot = await getMatchmaking(info.matchmakingId);
+      setCurrent(snapshot.playersCount);
+      setMax(snapshot.maxPlayers);
+      setMinPlayers(snapshot.minPlayers);
+      setPlayers(snapshot.players || []);
+      setForceEndAt(snapshot.forceEndAt || null);
+      setShouldEndAcceleratedAt(snapshot.shouldEndAcceleratedAt || null);
+
+      // Map new statuses to old UI statuses
+      let uiStatus: "idle" | "waiting" | "starting" | "failed" = "waiting";
+      if (snapshot.status === "Running") {
+        uiStatus = "waiting";
+      } else if (snapshot.status === "Ended Succeeded") {
+        uiStatus = "starting";
+      } else if (snapshot.status === "Ended NotEnoughPlayers" || snapshot.status === "Failed") {
+        uiStatus = "failed";
+      }
+
+      setStatus(uiStatus);
+      setPrivateRoomDialogOpen(false); // Close private room dialog
+      setDialogOpen(true); // Open matchmaking dialog
+      console.log('PrivateRoom: Successfully joined, opening matchmaking dialog with status:', uiStatus);
+
+    } catch (error) {
+      let errorMessage = "Nie udało się dołączyć do prywatnego pokoju. Spróbuj ponownie.";
+
+      if (error && typeof error === 'object' && 'error' in error) {
+        // This is a JoinError from our API
+        const joinError = error as JoinError;
+
+        // Use specific error messages based on error type
+        if (joinError.error === 'InvalidPasswordException') {
+          errorMessage = 'Nieprawidłowe hasło dostępu do pokoju.';
+        } else if (joinError.error === 'AlreadyJoined') {
+          errorMessage = 'Już dołączyłeś do tego pokoju.';
+        } else if (joinError.error === 'RoomIsFull') {
+          errorMessage = 'Pokój jest pełny. Spróbuj dołączyć później.';
+        } else if (joinError.error === 'PrivateServerInUse') {
+          errorMessage = 'Gra na tym serwerze jest już rozgrywana.';
+        } else {
+          errorMessage = joinError.message;
+        }
+      }
+
+      setPrivateRoomError(errorMessage);
+      console.log('PrivateRoom: Error joining:', errorMessage);
+    } finally {
+      setPrivateRoomBusy(false);
+    }
+  }, [privateRoomBusy]);
+
   /* ── 5. PRZERWIJ ── */
   const abort = useCallback(async () => {
     if (matchmakingId && playerId) {
@@ -572,7 +650,7 @@ export default function HomePage() {
                       value={nick}
                       onChange={e => setNick(e.target.value)}
                       disabled={busy || status !== "idle"}
-                      className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder:text-slate-400"
+                      className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder-gray"
                     />
                   </div>
                   <Button
@@ -626,6 +704,22 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* Private room button - subtle and at the bottom */}
+              <div className="pt-6 border-t border-slate-700/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPrivateRoomDialogOpen(true)}
+                  disabled={busy || status !== "idle"}
+                  className="w-full text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 transition-all duration-200 text-xs"
+                >
+                  <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Prywatny pokój
+                </Button>
+              </div>
+
             </div>
           </div>
 
@@ -649,6 +743,19 @@ export default function HomePage() {
         players={status === "failed" ? [] : players}
         recentJoins={status === "failed" ? [] : recentJoins}
         recentLeaves={status === "failed" ? [] : recentLeaves}
+      />
+
+      {/* Private Room Dialog */}
+      <PrivateRoomDialog
+        open={privateRoomDialogOpen}
+        onClose={() => {
+          setPrivateRoomDialogOpen(false);
+          setPrivateRoomError(null);
+        }}
+        onSubmit={submitPrivateRoom}
+        busy={privateRoomBusy}
+        error={privateRoomError}
+        placeholder={placeholder}
       />
 
       {/* Transition screens */}
@@ -731,7 +838,7 @@ export default function HomePage() {
                 <GameEndedScreen
                   results={entries}
                   onBackToMenu={() => { hardReset(); }}
-                  policy={gameData.ended?.policy === "PodiumAtAllCosts" ? "PodiumAtAllCosts" : "Classic"}
+                  policy={gameData.header.rankingPolicy === "PodiumAtAllCosts" ? "PodiumAtAllCosts" : "Classic"}
                   shareUrl={typeof window !== 'undefined' ? window.location.href : undefined}
                   myPlayerId={playerId}
                   hillName={gameData.header.hill?.name}

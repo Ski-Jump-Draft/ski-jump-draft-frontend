@@ -85,6 +85,8 @@ export const DraftBreakDemo = ({ onBack }: DraftBreakDemoProps) => {
             competitionJumpers,
             draftOrderPolicy: 'Snake',
             draftTimeoutInSeconds: 45,
+            draftPicksCount: 6,
+            rankingPolicy: 'PodiumAtAllCosts',
         };
 
         const data: GameUpdatedDto = {
