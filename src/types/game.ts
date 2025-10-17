@@ -23,6 +23,8 @@ export interface GameUpdatedDto {
 export interface GameHeaderDto {
     draftOrderPolicy: "Classic" | "Snake" | "Random";
     draftTimeoutInSeconds: number | null;
+    draftPicksCount: number; // Number of jumpers each player can pick (3-6)
+    rankingPolicy: "Classic" | "PodiumAtAllCosts"; // How points are calculated
     hill: GameHillDto;
     players: GamePlayerDto[];
     jumpers: GameJumperDto[];
@@ -163,7 +165,6 @@ export interface BreakDto {
 }
 
 export interface EndedDto {
-    policy: "Classic" | "PodiumAtAllCosts";
     ranking: Record<string, PositionAndPoints>; // position, points
 }
 

@@ -92,8 +92,10 @@ export const DraftDemo = ({ onBack }: DraftDemoProps) => {
             players,
             jumpers,
             competitionJumpers,
-            draftOrderPolicy: 'Classic',
+            draftOrderPolicy: 'Snake',
             draftTimeoutInSeconds: 30,
+            draftPicksCount: 5,
+            rankingPolicy: 'Classic',
         };
 
         const data: GameUpdatedDto = {
@@ -110,7 +112,7 @@ export const DraftDemo = ({ onBack }: DraftDemoProps) => {
                 currentPlayerId: players[1].playerId, // not me, to block real picks
                 timeoutInSeconds: 30,
                 ended: false,
-                orderPolicy: 'Classic',
+                orderPolicy: 'Snake',
                 picks,
                 availableJumpers: [],
                 nextPlayers: players.map(p => p.playerId),
