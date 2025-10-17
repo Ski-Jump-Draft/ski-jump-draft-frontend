@@ -117,15 +117,15 @@ export function StartList({
 
     return (
         <Card
-            className={cn("p-3 lg:p-4 flex flex-col", isCompetitionEnded && 'opacity-50', className)}
-            style={{ height: '60%', maxHeight: '60vh', ...style }}
+            className={cn("p-3 lg:p-4 flex flex-col lg:h-[60%] lg:max-h-[60vh]", isCompetitionEnded && 'opacity-50', className)}
+            style={style}
         >
             <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4 text-foreground flex-shrink-0">
                 Lista startowa
             </h3>
             <div
                 ref={startlistRef}
-                className="space-y-1 lg:space-y-2 flex-1 overflow-y-auto custom-scrollbar"
+                className="space-y-1 lg:space-y-2 lg:flex-1 lg:overflow-y-auto lg:min-h-0 custom-scrollbar"
                 onScroll={handleScroll}
             >
                 {entries.map((entry, index) => {

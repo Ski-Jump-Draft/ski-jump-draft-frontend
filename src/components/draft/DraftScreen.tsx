@@ -96,7 +96,7 @@ export const DraftScreen = ({ gameData, myPlayerId, isReadOnly = false }: DraftS
     }
 
     return (
-        <div className="fixed inset-0 bg-neutral-900 text-white p-4 lg:p-6 flex flex-col gap-6 min-h-0 overflow-hidden">
+        <div className="fixed inset-0 bg-neutral-900 text-white p-4 lg:p-6 flex flex-col gap-6 min-h-0 overflow-y-auto lg:overflow-hidden">
             <div className="mb-4 lg:mb-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 flex-shrink-0">
                 <div className="flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-end gap-2 lg:gap-4 mb-2">

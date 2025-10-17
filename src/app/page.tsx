@@ -786,21 +786,19 @@ export default function HomePage() {
           (() => {
             const mapped = mapGameDataToPreDraftProps(gameData);
             return (
-              <div className="fixed inset-0 z-50">
-                <PreDraftScreen
-                  gameData={gameData}
-                  startlist={mapped.startlist}
-                  players={mapped.players}
-                  sessions={mapped.sessions}
-                  currentJumperDetails={mapped.currentJumperDetails}
-                  nextJumpInSeconds={mapped.nextJumpInSeconds}
-                  jumpersRemainingInSession={mapped.jumpersRemainingInSession}
-                  isBreak={mapped.isBreak}
-                  breakRemainingSeconds={mapped.breakRemainingSeconds}
-                  nextStatus={mapped.nextStatus}
-                  isPreDraftEnded={preDraftEndedAt !== null}
-                />
-              </div>
+              <PreDraftScreen
+                gameData={gameData}
+                startlist={mapped.startlist}
+                players={mapped.players}
+                sessions={mapped.sessions}
+                currentJumperDetails={mapped.currentJumperDetails}
+                nextJumpInSeconds={mapped.nextJumpInSeconds}
+                jumpersRemainingInSession={mapped.jumpersRemainingInSession}
+                isBreak={mapped.isBreak}
+                breakRemainingSeconds={mapped.breakRemainingSeconds}
+                nextStatus={mapped.nextStatus}
+                isPreDraftEnded={preDraftEndedAt !== null}
+              />
             );
           })()
         ) : null
@@ -820,9 +818,7 @@ export default function HomePage() {
 
       {screen === "ended" && (
         isDemo ? (
-          <div className="fixed inset-0 z-50">
-            <GameEndedDemo onBack={() => { setIsDemo(false); hardReset(); }} />
-          </div>
+          <GameEndedDemo onBack={() => { setIsDemo(false); hardReset(); }} />
         ) : (
           <div className="fixed inset-0 z-50">
             {(() => {

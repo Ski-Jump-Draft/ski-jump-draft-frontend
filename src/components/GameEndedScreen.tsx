@@ -58,7 +58,7 @@ export function GameEndedScreen({
     const headerTitle = title ?? (hillName && hillHs ? `SJ Draft – ${hillName} HS${hillHs} ${flag}` : "SJ Draft – Wyniki końcowe");
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-neutral-950 text-white p-6">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-neutral-950 text-white p-6 overflow-y-auto">
             <div className="w-full max-w-5xl space-y-8">
                 <header className="flex items-center justify-between">
                     <div className="flex items-center gap-4 mr-5">
