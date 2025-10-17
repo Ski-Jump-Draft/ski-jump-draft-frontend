@@ -114,6 +114,8 @@ export function MainCompetitionScreen({
 
     const policy = gameData.header.rankingPolicy || "Classic";
 
+    const pickedByNext = nextJumperInfo?.gameJumperId ? getPickedBy(nextJumperInfo.gameJumperId) : null;
+
 
     return (
         <div className={cn("fixed inset-0 bg-background p-4 lg:p-6 flex flex-col overflow-y-auto lg:overflow-hidden")}>
@@ -346,6 +348,9 @@ export function MainCompetitionScreen({
                                     <span className="font-bold text-foreground">
                                         {nextJumperDisplay.name} {nextJumperDisplay.surname}
                                     </span>
+                                    {pickedByNext && (
+                                        <span className="ml-2 text-xs text-muted-foreground">({pickedByNext})</span>
+                                    )}
                                 </>
                             )}
                             {isCompetitionEnded && <span className="text-muted-foreground">Konkurs zakończony</span>}
