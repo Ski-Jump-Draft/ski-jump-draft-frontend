@@ -115,7 +115,6 @@ export function MainCompetitionScreen({
     const policy = gameData.header.rankingPolicy || "Classic";
     const pickedByNext = nextJumperInfo?.gameJumperId ? getPickedBy(nextJumperInfo.gameJumperId) : null;
 
-
     return (
         <div className={cn("fixed inset-0 bg-background p-4 lg:p-6 flex flex-col overflow-y-auto lg:overflow-hidden")}>
             {/* Header */}
