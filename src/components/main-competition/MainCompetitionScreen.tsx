@@ -247,6 +247,11 @@ export function MainCompetitionScreen({
                                                                             <span className="font-medium text-foreground">
                                                                                 {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
                                                                             </span>
+                                                                            {jumper?.gameJumperId && getPickedBy(jumper.gameJumperId) && (
+                                                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                                                    ({getPickedBy(jumper.gameJumperId)})
+                                                                                </span>
+                                                                            )}
                                                                         </div>
 
                                                                         {/* Rounds */}
@@ -297,6 +302,11 @@ export function MainCompetitionScreen({
                                                                         <span className="font-medium text-foreground">
                                                                             {jumper?.name || 'Unknown'} {jumper?.surname || 'Jumper'}
                                                                         </span>
+                                                                        {jumper?.gameJumperId && getPickedBy(jumper.gameJumperId) && (
+                                                                            <span className="ml-2 text-xs text-muted-foreground">
+                                                                                ({getPickedBy(jumper.gameJumperId)})
+                                                                            </span>
+                                                                        )}
                                                                     </div>
                                                                     {/* Rounds */}
                                                                     {Array.from({ length: maxRounds }).map((_, i) => (
