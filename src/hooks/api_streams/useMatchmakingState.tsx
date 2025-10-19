@@ -30,15 +30,28 @@ export function useMatchmakingState(
     const prevPlayersRef = useRef<string[]>([]);
     useEffect(() => {
         if (!matchId) {
-            prevPlayersRef.current = []; // Reset players when matchmakingId is null
+            prevPlayersRef.current = [];
             return;
         }
         const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5150').replace(/\/$/, '');
-        const es = new EventSource(`${base}/matchmaking/${matchId}/stream`);
+        const url = `${base}/matchmaking/${matchId}/stream`;
+        console.log('[MM] connecting to', url);
+        const es = new EventSource(url);
+
+        es.onopen = () => console.log('[MM] SSE connected');
+        es.onerror = (e) => {
+            console.error('[MM] SSE error:', e);
+            try { es.close(); } catch { }
+        };
 
         const handle = (e: MessageEvent) => {
-            const d = JSON.parse(e.data ?? '{}');
-            console.log("matchmaking payload:", d);
+            console.groupCollapsed('[MM] event');
+            console.log('raw event:', e);
+            console.log('raw data:', e.data);
+            let d: any = {};
+            try { d = JSON.parse(e.data ?? '{}'); }
+            catch (err) { console.error('[MM] JSON parse error', err); }
+            console.log('parsed data:', d);
 
             const playersArr: MatchmakingPlayerDto[] | undefined = d.Players?.map((p: any) => ({
                 playerId: String(p.PlayerId ?? p.playerId ?? ''),
@@ -46,13 +59,16 @@ export function useMatchmakingState(
                 isBot: Boolean(p.IsBot ?? p.isBot ?? p.IsBot === 'true' ?? p.isBot === 'true' ?? false),
                 joinedAt: String(p.JoinedAt ?? p.joinedAt ?? new Date().toISOString())
             }));
+            console.log('playersArr:', playersArr);
 
-            // Diff to emit joined/left notifications
             if (playersArr && Array.isArray(playersArr)) {
                 const currentIds = playersArr.map(p => p.playerId);
                 const prevIds = prevPlayersRef.current;
+                console.log('prevIds:', prevIds, 'currentIds:', currentIds);
                 const joinedIds = currentIds.filter(id => !prevIds.includes(id));
                 const leftIds = prevIds.filter(id => !currentIds.includes(id));
+                console.log('joinedIds:', joinedIds, 'leftIds:', leftIds);
+
                 if (joinedIds.length && handlers?.onPlayerJoined) {
                     joinedIds.forEach(id => {
                         const p = playersArr.find(x => x.playerId === id);
@@ -61,12 +77,7 @@ export function useMatchmakingState(
                 }
                 if (leftIds.length && handlers?.onPlayerLeft) {
                     leftIds.forEach(id => {
-                        const p: MatchmakingPlayerDto = {
-                            playerId: id,
-                            nick: id,
-                            isBot: false,
-                            joinedAt: new Date().toISOString()
-                        };
+                        const p: MatchmakingPlayerDto = { playerId: id, nick: id, isBot: false, joinedAt: new Date().toISOString() };
                         handlers.onPlayerLeft!(p);
                     });
                 }
@@ -87,20 +98,14 @@ export function useMatchmakingState(
                 endAfterNoUpdate: d.EndAfterNoUpdate ?? d.endAfterNoUpdate ?? false,
                 shouldEndAcceleratedAt: d.ShouldEndAcceleratedAt ?? d.shouldEndAcceleratedAt ?? null,
             });
+            console.groupEnd();
         };
 
-        const onError = (e: any) => {
-            console.error('MatchmakingEventSource error:', e);
-            try { es.close(); } catch { }
-        };
-
-        // działa, jeśli wysyłasz nazwany event:
         es.addEventListener('matchmaking-updated', handle);
-        // …i/lub domyślny:
         es.onmessage = handle;
-        es.onerror = onError;
 
         return () => {
+            console.log('[MM] cleanup');
             es.removeEventListener('matchmaking-updated', handle);
             es.onerror = null as any;
             es.close();
