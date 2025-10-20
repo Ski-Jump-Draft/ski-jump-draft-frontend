@@ -18,25 +18,156 @@ const languageNames = {
 };
 
 const content = {
-    pl: { title: 'Polityka Prywatności i Regulamin', privacy: { title: 'Polityka Prywatności', sections: [{ title: 'Zbierane dane', content: 'Zbieramy tylko nick gracza oraz adres IP (przez logi serwera). Nie wymagamy rejestracji ani podawania danych osobowych.' }, { title: 'Cel zbierania', content: 'Dane służą wyłącznie do działania gry - identyfikacji gracza, prowadzenia rankingu i zapewnienia płynnej rozgrywki.' }, { title: 'Udostępnianie', content: 'Nie udostępniamy zebranych danych osobom trzecim. Nie prowadzimy analiz marketingowych ani nie sprzedajemy danych.' }, { title: 'Kontakt', content: 'Jeśli chcesz usunąć swoje dane, skontaktuj się z nami:' }] }, terms: { title: 'Regulamin', sections: [{ title: 'Charakter gry', content: 'SJ Draft to darmowa gra online o charakterze rozrywkowym. Nie odzwierciedla rzeczywistych wyników sportowych - skoczkowie są fikcyjni.' }, { title: 'Zasady użytkowania', content: 'Zabrania się cheatowania, spamowania, używania wulgaryzmów oraz wszelkich działań zakłócających rozgrywkę innych graczy.' }, { title: 'Odpowiedzialność', content: 'Gra jest udostępniana "as is" - nie ponosimy odpowiedzialności za błędy, przerwy w działaniu czy utratę postępów w grze.' }, { title: 'Własność intelektualna', content: 'Logo, nazwa i grafika SJ Draft pozostają własnością autora. Zabrania się ich nieautoryzowanego wykorzystywania.' }, { title: 'Aktualizacje', content: 'Warunki mogą być aktualizowane. Wersja aktualna jest zawsze dostępna na stronie gry.' }] }, contact: 'Kontakt w sprawach dotyczących gry:' }, en: { title: 'Privacy Policy and Terms of Service', privacy: { title: 'Privacy Policy', sections: [{ title: 'Data collected', content: 'We collect only player nickname and IP address (through server logs). No registration or personal data required.' }, { title: 'Purpose', content: 'Data is used solely for game functionality - player identification, ranking system and ensuring smooth gameplay.' }, { title: 'Sharing', content: 'We do not share collected data with third parties. We do not conduct marketing analysis or sell data.' }, { title: 'Contact', content: 'If you want to delete your data, contact us:' }] }, terms: { title: 'Terms of Service', sections: [{ title: 'Game nature', content: 'SJ Draft is a free online entertainment game. It does not reflect real sports results - jumpers are fictional.' }, { title: 'Usage rules', content: 'Cheating, spamming, using profanity and any actions disrupting other players\' gameplay are prohibited.' }, { title: 'Liability', content: 'Game is provided "as is" - we are not responsible for bugs, service interruptions or loss of game progress.' }, { title: 'Intellectual property', content: 'SJ Draft logo, name and graphics remain property of the author. Unauthorized use is prohibited.' }, { title: 'Updates', content: 'Terms may be updated. Current version is always available on the game website.' }] }, contact: 'Contact for game-related matters:' }, cs: { title: 'Zásady ochrany osobních údajů a Podmínky služby', privacy: { title: 'Zásady ochrany osobních údajů', sections: [{ title: 'Shromažďované údaje', content: 'Shromažďujeme pouze přezdívku hráče a IP adresu (prostřednictvím serverových logů). Registrace ani osobní údaje nejsou vyžadovány.' }, { title: 'Účel', content: 'Údaje slouží výhradně pro funkčnost hry - identifikaci hráče, žebříček a zajištění plynulé hry.' }, { title: 'Sdílení', content: 'Nesdílíme shromážděné údaje s třetími stranami. Neprovádíme marketingové analýzy ani neprodáváme data.' }, { title: 'Kontakt', content: 'Pokud chcete smazat své údaje, kontaktujte nás:' }] }, terms: { title: 'Podmínky služby', sections: [{ title: 'Povaha hry', content: 'SJ Draft je bezplatná online zábavní hra. Neodráží skutečné sportovní výsledky - skokani jsou fiktivní.' }, { title: 'Pravidla používání', content: 'Zakazuje se podvádění, spamování, používání vulgárních výrazů a jakékoli akce narušující hru ostatních hráčů.' }, { title: 'Odpovědnost', content: 'Hra je poskytována "tak jak je" - neodpovídáme za chyby, výpadky služby nebo ztrátu herního pokroku.' }, { title: 'Duševní vlastnictví', content: 'Logo, název a grafika SJ Draft zůstávají majetkem autora. Neoprávněné použití je zakázáno.' }, { title: 'Aktualizace', content: 'Podmínky mohou být aktualizovány. Aktuální verze je vždy dostupná na herní stránce.' }] }, contact: 'Kontakt pro záležitosti týkající se hry:' }, sl: {
+    pl: {
+        title: 'Polityka Prywatności i Regulamin',
+        privacy: {
+            title: 'Polityka Prywatności',
+            sections: [
+                {
+                    title: 'Zbierane dane',
+                    content: 'Gra zbiera anonimowe dane techniczne (np. długość sesji, błędy, wersję przeglądarki) wyłącznie w celu poprawy stabilności i jakości działania. Dane te nie pozwalają na identyfikację użytkownika.'
+                },
+                {
+                    title: 'Udostępnianie danych',
+                    content: 'Nie udostępniamy zebranych danych osobom trzecim. Nie prowadzimy analiz marketingowych ani nie sprzedajemy danych.',
+                },
+                {
+                    title: 'Kontakt',
+                    content: 'Jeśli chcesz usunąć swoje dane, skontaktuj się z nami:',
+                },
+            ],
+        },
+        terms: {
+            title: 'Regulamin',
+            sections: [
+                {
+                    title: 'Charakter gry',
+                    content: 'SJ Draft to darmowa gra online o charakterze rozrywkowym. Nie odzwierciedla rzeczywistych wyników sportowych - skoczkowie są fikcyjni.',
+                },
+                {
+                    title: 'Zasady użytkowania',
+                    content: 'Zabrania się cheatowania, spamowania, używania wulgaryzmów oraz wszelkich działań zakłócających rozgrywkę innych graczy.',
+                },
+                {
+                    title: 'Odpowiedzialność',
+                    content: 'Gra jest udostępniana "as is" - nie ponosimy odpowiedzialności za błędy, przerwy w działaniu czy utratę postępów w grze.',
+                },
+                {
+                    title: 'Własność intelektualna',
+                    content: 'Logo, nazwa i grafika SJ Draft pozostają własnością autora. Zabrania się ich nieautoryzowanego wykorzystywania.',
+                },
+                {
+                    title: 'Aktualizacje',
+                    content: 'Warunki mogą być aktualizowane. Wersja aktualna jest zawsze dostępna na stronie gry.',
+                },
+            ],
+        },
+        contact: 'Kontakt w sprawach dotyczących gry:',
+    },
+    en: {
+        title: 'Privacy Policy and Terms of Service',
+        privacy: {
+            title: 'Privacy Policy',
+            sections: [
+                {
+                    title: 'Data collected',
+                    content: 'The game collects anonymous technical data (e.g. session length, errors, browser version) solely to improve stability and quality. This data cannot identify individual users.',
+                },
+                {
+                    title: 'Data sharing',
+                    content: 'We do not share collected data with third parties. We do not conduct marketing analysis or sell data.',
+                },
+                {
+                    title: 'Contact',
+                    content: 'If you want to delete your data, contact us:',
+                },
+            ],
+        },
+        terms: {
+            title: 'Terms of Service',
+            sections: [
+                {
+                    title: 'Game nature',
+                    content: 'SJ Draft is a free online entertainment game. It does not reflect real sports results - jumpers are fictional.',
+                },
+                {
+                    title: 'Usage rules',
+                    content: 'Cheating, spamming, using profanity and any actions disrupting other players\' gameplay are prohibited.',
+                },
+                {
+                    title: 'Liability',
+                    content: 'Game is provided "as is" - we are not responsible for bugs, service interruptions or loss of game progress.',
+                },
+                {
+                    title: 'Intellectual property',
+                    content: 'SJ Draft logo, name and graphics remain property of the author. Unauthorized use is prohibited.',
+                },
+                {
+                    title: 'Updates',
+                    content: 'Terms may be updated. Current version is always available on the game website.',
+                },
+            ],
+        },
+        contact: 'Contact for game-related matters:',
+    },
+    cs: {
+        title: 'Zásady ochrany osobních údajů a Podmínky služby',
+        privacy: {
+            title: 'Zásady ochrany osobních údajů',
+            sections: [
+                {
+                    title: 'Shromažďované údaje',
+                    content: 'Hra shromažďuje anonymní technická data (např. délku sezení, chyby, verzi prohlížeče) výhradně za účelem zlepšení stability a kvality hry. Tato data neumožňují identifikaci uživatele.',
+                },
+                {
+                    title: 'Sdílení údajů',
+                    content: 'Nesdílíme shromážděné údaje s třetími stranami. Neprovádíme marketingové analýzy ani neprodáváme data.',
+                },
+                {
+                    title: 'Kontakt',
+                    content: 'Pokud chcete smazat své údaje, kontaktujte nás:',
+                },
+            ],
+        },
+        terms: {
+            title: 'Podmínky služby',
+            sections: [
+                {
+                    title: 'Povaha hry',
+                    content: 'SJ Draft je bezplatná online zábavní hra. Neodráží skutečné sportovní výsledky - skokani jsou fiktivní.',
+                },
+                {
+                    title: 'Pravidla používání',
+                    content: 'Zakazuje se podvádění, spamování, používání vulgárních výrazů a jakékoli akce narušující hru ostatních hráčů.',
+                },
+                {
+                    title: 'Odpovědnost',
+                    content: 'Hra je poskytována "tak jak je" - neodpovídáme za chyby, výpadky služby nebo ztrátu herního pokroku.',
+                },
+                {
+                    title: 'Duševní vlastnictví',
+                    content: 'Logo, název a grafika SJ Draft zůstávají majetkem autora. Neoprávněné použití je zakázáno.',
+                },
+                {
+                    title: 'Aktualizace',
+                    content: 'Podmínky mohou být aktualizovány. Aktuální verze je vždy dostupná na herní stránce.',
+                },
+            ],
+        },
+        contact: 'Kontakt pro záležitosti týkající se hry:',
+    },
+    sl: {
         title: 'Polityka prziwatności i regulōmin',
         privacy: {
             title: 'Polityka prziwatności',
             sections: [
                 {
                     title: 'Zbiōr danych',
-                    content:
-                        'Zbiyrōmy ino nik gracza i adres IP (przez logi serwera). Niy trza rejstracyje ani podowaniŏ ôsobistych danych.',
+                    content: 'Gra zbiyrŏ anonimowe dane techniczne (np. długość sesyje, błyndy, wersyjo przeglōndarki) w cylu poprowy stabilności i jakości gry. Dane te niy umożebniają idyntyfikacyje użytkownika.',
                 },
                 {
-                    title: 'Cyl zbiyranio',
-                    content:
-                        'Dane służōm wyłōncznie do dziyłanio gry: idyntyfikacyje gracza, prowadzyniŏ rankingu i zapełniyniŏ płynnyj rozgrywki.',
-                },
-                {
-                    title: 'Udostympniōwanie',
-                    content:
-                        'Niy udostympniōmy danych postronnym. Niy robiy my analiz marketingowych i niy sprzedajymy danych.',
+                    title: 'Udostympniōwanie danych',
+                    content: 'Niy udostympniōmy danych postronnym. Niy robiy my analiz marketingowych i niy sprzedajymy danych.',
                 },
                 {
                     title: 'Kontakt',
