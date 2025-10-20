@@ -632,7 +632,7 @@ export default function HomePage() {
               <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-sm text-slate-300">Rozgrywka trwa około 15 minut</span>
+              <span className="text-sm text-slate-300">Rozgrywka trwa około 20 minut</span>
             </div>
           </div>
 
