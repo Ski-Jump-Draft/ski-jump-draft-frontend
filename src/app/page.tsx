@@ -30,6 +30,7 @@ import { GameEndedDemo } from "@/components/GameEndedDemo";
 import { GameEndedScreen } from "@/components/GameEndedScreen";
 import { MainCompetitionScreen } from "@/components/main-competition/MainCompetitionScreen";
 import { MainCompetitionDemo } from "@/components/main-competition/MainCompetitionDemo";
+import { CreditsDialog } from "@/components/credits/CreditsDialog";
 
 /* ───────────────────────────────────────────── */
 
@@ -570,7 +571,7 @@ export default function HomePage() {
       {/* Animated background with gradient overlay */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/assets/predazzo_4k.jpeg')" }} />
+          style={{ backgroundImage: "url('/assets/wiselka.jpg')" }} />
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/75 via-slate-800/90 to-slate-900/95" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
@@ -752,6 +753,8 @@ export default function HomePage() {
           <Toaster richColors />
         </div>
       )}
+
+      <CreditsDialog />
 
       {/* Matchmaking Dialog - always visible when open */}
       <MatchmakingDialog
