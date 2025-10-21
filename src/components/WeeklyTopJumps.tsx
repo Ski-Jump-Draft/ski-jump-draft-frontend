@@ -51,9 +51,9 @@ export function WeeklyTopJumps() {
     if (isLoading || error || jumps.length < 20) return null;
 
     return (
-        <Card className="w-full">
+        <Card className="w-full bg-slate-800/40 border-slate-700/50 shadow-none">
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
                     <CardTitle>Najdalsze skoki tygodnia</CardTitle>
                     <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="sm">

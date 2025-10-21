@@ -607,6 +607,12 @@ export default function HomePage() {
       {/* Main content container - only show when screen is "none" */}
       {screen === "none" && (
         <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+          {/* <aside className="hidden lg:block w-64 shrink-0">
+            <div className="bg-slate-900/40 border border-slate-700/50 rounded-2xl p-4 text-sm">
+              <WeeklyTopJumps />
+            </div>
+          </aside> */}
+
           {/* Hero section */}
           <div className="text-center mb-12">
             {/* Logo */}
