@@ -72,12 +72,12 @@ export function WeeklyTopJumps() {
                     <CardContent>
                         <div className="space-y-4">
                             {top5Jumps.map((jump, index) => {
-                                const jumper = getJumperById(jump.GameJumperId);
+                                const jumper = getJumperById(jump.GameWorldJumperId);
                                 const flagCode = jumper?.nationality?.toLowerCase() || "xx";
 
                                 return (
                                     <div
-                                        key={`${jump.GameId}-${jump.GameJumperId}`}
+                                        key={`${jump.GameId}-${jump.GameWorldJumperId}`}
                                         className={cn(
                                             "flex items-center space-x-4 p-3 rounded-lg",
                                             index === 0

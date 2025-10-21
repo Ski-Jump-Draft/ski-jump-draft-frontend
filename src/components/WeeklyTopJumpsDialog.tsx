@@ -53,12 +53,12 @@ export function WeeklyTopJumpsDialog({
                 <ScrollArea className="h-[600px] pr-4">
                     <div className="space-y-4">
                         {jumps.map((jump, index) => {
-                            const jumper = getJumperById(jump.GameJumperId)
+                            const jumper = getJumperById(jump.JumperId)
                             const flagCode = jumper?.nationality?.toLowerCase() || "xx"
 
                             return (
                                 <div
-                                    key={`${jump.GameId}-${jump.GameJumperId}`}
+                                    key={`${jump.GameId}-${jump.JumperId}`}
                                     className={cn(
                                         "flex items-center space-x-4 p-4 rounded-lg",
                                         index === 0
@@ -111,13 +111,8 @@ export function WeeklyTopJumpsDialog({
                                         <p className="text-sm text-muted-foreground">
                                             K{jump.KPoint ?? "?"} HS{jump.HsPoint ?? "?"}
                                         </p>
+                                        <p className="text-lg font-bold">{fmt(jump.Distance)} m</p>
                                     </div>
-
-                                    {jump.DraftPlayerNicks?.length > 0 && (
-                                        <div className="text-sm bg-blue-100 dark:bg-blue-900 px-3 py-1.5 rounded-full">
-                                            {jump.DraftPlayerNicks.join(", ")}
-                                        </div>
-                                    )}
                                 </div>
                             )
                         })}
