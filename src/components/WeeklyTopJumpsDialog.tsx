@@ -53,12 +53,12 @@ export function WeeklyTopJumpsDialog({
                 <ScrollArea className="h-[600px] pr-4">
                     <div className="space-y-4">
                         {jumps.map((jump, index) => {
-                            const jumper = getJumperById(jump.JumperId)
+                            const jumper = getJumperById(jump.GameWorldJumperId)
                             const flagCode = jumper?.nationality?.toLowerCase() || "xx"
 
                             return (
                                 <div
-                                    key={`${jump.GameId}-${jump.JumperId}`}
+                                    key={`${jump.GameId}-${jump.GameWorldJumperId}`}
                                     className={cn(
                                         "flex items-center space-x-4 p-4 rounded-lg",
                                         index === 0
