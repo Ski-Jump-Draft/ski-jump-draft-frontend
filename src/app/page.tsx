@@ -31,6 +31,7 @@ import { GameEndedScreen } from "@/components/GameEndedScreen";
 import { MainCompetitionScreen } from "@/components/main-competition/MainCompetitionScreen";
 import { MainCompetitionDemo } from "@/components/main-competition/MainCompetitionDemo";
 import { CreditsDialog } from "@/components/credits/CreditsDialog";
+import { WeeklyTopJumps } from "@/components/WeeklyTopJumps";
 
 /* ───────────────────────────────────────────── */
 
@@ -639,6 +640,11 @@ export default function HomePage() {
           {/* Game entry form */}
           <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
             <div className="space-y-6">
+              {/* Weekly Top Jumps */}
+              <div className="mb-8">
+                <WeeklyTopJumps />
+              </div>
+
               {/* Input section */}
               <div className="space-y-4">
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
