@@ -721,13 +721,13 @@ export default function HomePage() {
                 </Button>
               </div>
 
-              {/* Legal links */}
-              <div className="pt-4 flex justify-center gap-6 text-xs">
+              {/* Legal + credits links */}
+              <div className="pt-4 flex justify-center gap-6 text-xs text-slate-500">
                 <a
                   href="/legal"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-500 hover:text-slate-300 transition-colors duration-200 flex items-center gap-1"
+                  className="hover:text-slate-300 flex items-center gap-1 transition-colors duration-200"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -738,14 +738,17 @@ export default function HomePage() {
                   href="/legal"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-slate-500 hover:text-slate-300 transition-colors duration-200 flex items-center gap-1"
+                  className="hover:text-slate-300 flex items-center gap-1 transition-colors duration-200"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Regulamin
                 </a>
+                <CreditsDialog />
+
               </div>
+
 
             </div>
           </div>
@@ -753,8 +756,6 @@ export default function HomePage() {
           <Toaster richColors />
         </div>
       )}
-
-      <CreditsDialog />
 
       {/* Matchmaking Dialog - always visible when open */}
       <MatchmakingDialog
