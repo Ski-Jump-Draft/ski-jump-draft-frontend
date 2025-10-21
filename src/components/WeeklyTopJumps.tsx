@@ -104,7 +104,10 @@ export function WeeklyTopJumps() {
                                                 </p>
                                             </div>
                                             <p className="text-sm text-muted-foreground">
-                                                {format(new Date(jump.GameCreatedAt), "MMM d, yyyy")}
+                                                {jump.GameCreatedAt && !isNaN(Date.parse(jump.GameCreatedAt))
+                                                    ? format(new Date(jump.GameCreatedAt), "MMM d, yyyy")
+                                                    : "—"}
+
                                             </p>
                                         </div>
                                         <div className="text-right">

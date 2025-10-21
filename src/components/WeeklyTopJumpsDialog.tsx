@@ -85,7 +85,10 @@ export function WeeklyTopJumpsDialog({
                                         </div>
                                         <div className="flex items-center space-x-4 mt-1">
                                             <p className="text-sm text-muted-foreground">
-                                                {format(new Date(jump.GameCreatedAt), "MMM d, yyyy")}
+                                                {jump.GameCreatedAt && !isNaN(Date.parse(jump.GameCreatedAt))
+                                                    ? format(new Date(jump.GameCreatedAt), "MMM d, yyyy")
+                                                    : "—"}
+
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 Gate: {jump.Gate}
