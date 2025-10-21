@@ -33,7 +33,7 @@ export function WeeklyTopJumpsDialog({
     const { getJumperById } = useJumperData()
 
     const fmt = (v?: number) =>
-        v != null && !isNaN(v) ? v.toFixed(1) : "—"
+        typeof v === "number" && !isNaN(v) ? v.toFixed(1) : "—"
 
     const fmtDate = (d?: string) =>
         d && !isNaN(Date.parse(d)) ? format(new Date(d), "MMM d, yyyy") : "—"
