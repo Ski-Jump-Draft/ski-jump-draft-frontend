@@ -5,7 +5,10 @@ export interface WeeklyTopJumpDto {
     KPoint: number;
     HsPoint: number;
     CompetitionJumperId: string;
-    GameJumperId: string;
+    GameWorldJumperId: string;
+    Name: string;
+    Surname: string;
+    CountryCode: string;
     Distance: number;
     WindAverage: number;
     Gate: number;
