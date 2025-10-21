@@ -32,6 +32,12 @@ export function WeeklyTopJumpsDialog({
 }: WeeklyTopJumpsDialogProps) {
     const { getJumperById } = useJumperData()
 
+    const fmt = (v?: number) =>
+        v != null && !isNaN(v) ? v.toFixed(1) : "—"
+
+    const fmtDate = (d?: string) =>
+        d && !isNaN(Date.parse(d)) ? format(new Date(d), "MMM d, yyyy") : "—"
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
@@ -48,7 +54,7 @@ export function WeeklyTopJumpsDialog({
                     <div className="space-y-4">
                         {jumps.map((jump, index) => {
                             const jumper = getJumperById(jump.GameJumperId)
-                            const flagCode = jumper?.nationality.toLowerCase() || "xx"
+                            const flagCode = jumper?.nationality?.toLowerCase() || "xx"
 
                             return (
                                 <div
@@ -72,6 +78,7 @@ export function WeeklyTopJumpsDialog({
                                             <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700" />
                                         )}
                                     </div>
+
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2">
                                             <Image
@@ -81,32 +88,32 @@ export function WeeklyTopJumpsDialog({
                                                 height={18}
                                                 className="rounded"
                                             />
-                                            <p className="text-lg font-medium">{jumper?.name}</p>
+                                            <p className="text-lg font-medium">{jumper?.name ?? "Unknown"}</p>
                                         </div>
+
                                         <div className="flex items-center space-x-4 mt-1">
                                             <p className="text-sm text-muted-foreground">
-                                                {jump.GameCreatedAt && !isNaN(Date.parse(jump.GameCreatedAt))
-                                                    ? format(new Date(jump.GameCreatedAt), "MMM d, yyyy")
-                                                    : "—"}
-
+                                                {fmtDate(jump.GameCreatedAt)}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Gate: {jump.Gate}
+                                                Gate: {jump.Gate ?? "—"}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Wind: {jump.WindAverage.toFixed(1)} m/s
+                                                Wind: {fmt(jump.WindAverage)} m/s
                                             </p>
                                         </div>
                                     </div>
+
                                     <div className="text-right">
                                         <p className="text-xl font-semibold">
-                                            {jump.Distance.toFixed(1)}m
+                                            {fmt(jump.Distance)}m
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            K{jump.KPoint} HS{jump.HsPoint}
+                                            K{jump.KPoint ?? "?"} HS{jump.HsPoint ?? "?"}
                                         </p>
                                     </div>
-                                    {jump.DraftPlayerNicks.length > 0 && (
+
+                                    {jump.DraftPlayerNicks?.length > 0 && (
                                         <div className="text-sm bg-blue-100 dark:bg-blue-900 px-3 py-1.5 rounded-full">
                                             {jump.DraftPlayerNicks.join(", ")}
                                         </div>
