@@ -53,12 +53,12 @@ export function WeeklyTopJumpsDialog({
                 <ScrollArea className="h-[600px] pr-4">
                     <div className="space-y-4">
                         {jumps.map((jump, index) => {
-                            const jumper = getJumperById(jump.GameWorldJumperId)
+                            const jumper = getJumperById(jump.gameWorldJumperId)
                             const flagCode = jumper?.nationality?.toLowerCase() || "xx"
 
                             return (
                                 <div
-                                    key={`${jump.GameId}-${jump.GameWorldJumperId}`}
+                                    key={`${jump.gameId}-${jump.gameWorldJumperId}`}
                                     className={cn(
                                         "flex items-center space-x-4 p-4 rounded-lg",
                                         index === 0
@@ -93,25 +93,25 @@ export function WeeklyTopJumpsDialog({
 
                                         <div className="flex items-center space-x-4 mt-1">
                                             <p className="text-sm text-muted-foreground">
-                                                {fmtDate(jump.GameCreatedAt)}
+                                                {fmtDate(jump.gameCreatedAt)}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Gate: {jump.Gate ?? "—"}
+                                                Gate: {jump.gate ?? "—"}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                Wind: {fmt(jump.WindAverage)} m/s
+                                                Wind: {fmt(jump.windAverage)} m/s
                                             </p>
                                         </div>
                                     </div>
 
                                     <div className="text-right">
                                         <p className="text-xl font-semibold">
-                                            {fmt(jump.Distance)}m
+                                            {fmt(jump.distance)}m
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            K{jump.KPoint ?? "?"} HS{jump.HsPoint ?? "?"}
+                                            K{jump.kPoint ?? "?"} HS{jump.hsPoint ?? "?"}
                                         </p>
-                                        <p className="text-lg font-bold">{fmt(jump.Distance)} m</p>
+                                        <p className="text-lg font-bold">{fmt(jump.distance)} m</p>
                                     </div>
                                 </div>
                             )

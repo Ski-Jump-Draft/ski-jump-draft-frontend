@@ -73,12 +73,12 @@ export function WeeklyTopJumps() {
                     <CardContent className="px-4 py-3">
                         <div className="space-y-2">
                             {top5Jumps.map((jump, index) => {
-                                const jumper = getJumperById(jump.GameWorldJumperId);
+                                const jumper = getJumperById(jump.gameWorldJumperId);
                                 const flagCode = jumper?.nationality?.toLowerCase() || "xx";
 
                                 return (
                                     <div
-                                        key={`${jump.GameId}-${jump.GameWorldJumperId}`}
+                                        key={`${jump.gameId}-${jump.gameWorldJumperId}`}
                                         className={cn(
                                             "flex items-center space-x-2 p-2 rounded-md text-xs",
                                             index === 0
@@ -113,22 +113,22 @@ export function WeeklyTopJumps() {
                                                 </p>
                                             </div>
                                             <p className="text-xs text-slate-500">
-                                                {fmtDate(jump.GameCreatedAt)}
+                                                {fmtDate(jump.gameCreatedAt)}
                                             </p>
                                         </div>
 
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-xs font-semibold text-slate-200">
-                                                {fmt(jump.Distance)}m
+                                                {fmt(jump.distance)}m
                                             </p>
                                             <p className="text-xs text-slate-500">
-                                                K{jump.KPoint ?? "?"} HS{jump.HsPoint ?? "?"}
+                                                K{jump.kPoint ?? "?"} HS{jump.hsPoint ?? "?"}
                                             </p>
                                         </div>
 
-                                        {jump.DraftPlayerNicks?.length > 0 && (
+                                        {jump.draftPlayerNicks?.length > 0 && (
                                             <div className="text-xs bg-blue-900/30 border border-blue-700/30 px-1.5 py-0.5 rounded text-blue-300">
-                                                {jump.DraftPlayerNicks.join(", ")}
+                                                {jump.draftPlayerNicks.join(", ")}
                                             </div>
                                         )}
                                     </div>
