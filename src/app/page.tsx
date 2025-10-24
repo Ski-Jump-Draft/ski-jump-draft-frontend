@@ -570,6 +570,7 @@ export default function HomePage() {
   return (
     <main className="relative flex min-h-screen w-screen items-center justify-center overflow-auto font-sans">
       {/* Animated background with gradient overlay */}
+
       <div className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/assets/wiselka.jpg')" }} />
@@ -604,9 +605,10 @@ export default function HomePage() {
         ))}
       </div>
 
+
       {/* Main content container - only show when screen is "none" */}
       {screen === "none" && (
-        <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-6">
           {/* Hero section */}
           <div className="text-center mb-12">
             {/* Logo */}
@@ -637,125 +639,129 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Game entry form */}
-          <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
-            <div className="space-y-6">
-              {/* Weekly Top Jumps */}
-              <div className="mb-8">
-                <WeeklyTopJumps />
-              </div>
+          <div className="flex flex-col md:flex-row gap-10 items-start justify-center">
+            {/* LEFT: ranking */}
+            <aside className="w-full md:w-[25rem] lg:w-[25rem] shrink-0 order-2 md:order-1">
+              <WeeklyTopJumps />
+            </aside>
 
-              {/* Input section */}
-              <div className="space-y-4">
-                <label className="block text-sm font-semibold text-slate-300 mb-2">
-                  Wybierz swój pseudonim
-                </label>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Input
-                      placeholder={placeholder}
-                      value={nick}
-                      onChange={e => setNick(e.target.value)}
-                      disabled={busy || status !== "idle"}
-                      className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder-gray"
-                    />
-                  </div>
-                  <Button
-                    disabled={busy || status !== "idle"}
-                    onClick={submit}
-                    className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 transform hover:scale-105"
-                  >
-                    {busy ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Łączenie…
+            {/* Right column: main card */}
+            <div className="flex-1 order-1 md:order-2">
+              <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
+                <div className="space-y-6">
+                  {/* Game entry form */}
+                  {/* Input section */}
+                  <div className="space-y-4">
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">
+                      Wybierz swój pseudonim
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1 relative">
+                        <Input
+                          placeholder={placeholder}
+                          value={nick}
+                          onChange={e => setNick(e.target.value)}
+                          disabled={busy || status !== "idle"}
+                          className="h-12 px-4 text-lg bg-slate-800/50 border-slate-600/50 focus:border-blue-400/50 focus:ring-blue-400/20 rounded-xl transition-all duration-200 placeholder-gray"
+                        />
                       </div>
-                    ) : (
-                      "Zagraj"
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Demo buttons */}
-              {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
-                <div className="pt-6 border-t border-slate-700/50">
-                  <div className="flex items-center gap-2 mb-4">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <span className="text-sm font-medium text-slate-400">Tryb deweloperski</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {[
-                      { label: "PreDraft", screen: "predraft" },
-                      { label: "Draft", screen: "draft" },
-                      { label: "Draft Break", screen: "draft" },
-                      { label: "Wyniki", screen: "ended" },
-                      { label: "Konkurs", screen: "main-competition" }
-                    ].map((demo) => (
                       <Button
-                        key={demo.screen + demo.label}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setIsDemo(true);
-                          setScreen(demo.screen as any);
-                        }}
-                        className="text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500/50 rounded-lg transition-all duration-200"
+                        disabled={busy || status !== "idle"}
+                        onClick={submit}
+                        className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 transform hover:scale-105"
                       >
-                        {demo.label}
+                        {busy ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Łączenie…
+                          </div>
+                        ) : (
+                          "Zagraj"
+                        )}
                       </Button>
-                    ))}
+                    </div>
                   </div>
+
+                  {/* Demo buttons */}
+                  {process.env.NEXT_PUBLIC_SHOW_DEMO_BUTTONS === 'true' && (
+                    <div className="pt-6 border-t border-slate-700/50">
+                      <div className="flex items-center gap-2 mb-4">
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <span className="text-sm font-medium text-slate-400">Tryb deweloperski</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[
+                          { label: "PreDraft", screen: "predraft" },
+                          { label: "Draft", screen: "draft" },
+                          { label: "Draft Break", screen: "draft" },
+                          { label: "Wyniki", screen: "ended" },
+                          { label: "Konkurs", screen: "main-competition" }
+                        ].map((demo) => (
+                          <Button
+                            key={demo.screen + demo.label}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsDemo(true);
+                              setScreen(demo.screen as any);
+                            }}
+                            className="text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500/50 rounded-lg transition-all duration-200"
+                          >
+                            {demo.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Private room button - subtle and at the bottom */}
+                  <div className="pt-6 border-t border-slate-700/50">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setPrivateRoomDialogOpen(true)}
+                      disabled={busy || status !== "idle"}
+                      className="w-full text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 transition-all duration-200 text-xs"
+                    >
+                      <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Prywatny pokój
+                    </Button>
+                  </div>
+
+                  {/* Legal + credits links */}
+                  <div className="pt-4 flex justify-center gap-6 text-xs text-slate-500">
+                    <a
+                      href="/legal"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-slate-300 flex items-center gap-1 transition-colors duration-200"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      Polityka prywatności
+                    </a>
+                    <a
+                      href="/legal"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-slate-300 flex items-center gap-1 transition-colors duration-200"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Regulamin
+                    </a>
+                    <CreditsDialog />
+
+                  </div>
+
                 </div>
-              )}
-
-              {/* Private room button - subtle and at the bottom */}
-              <div className="pt-6 border-t border-slate-700/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPrivateRoomDialogOpen(true)}
-                  disabled={busy || status !== "idle"}
-                  className="w-full text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 transition-all duration-200 text-xs"
-                >
-                  <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  Prywatny pokój
-                </Button>
               </div>
-
-              {/* Legal + credits links */}
-              <div className="pt-4 flex justify-center gap-6 text-xs text-slate-500">
-                <a
-                  href="/legal"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-slate-300 flex items-center gap-1 transition-colors duration-200"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  Polityka prywatności
-                </a>
-                <a
-                  href="/legal"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-slate-300 flex items-center gap-1 transition-colors duration-200"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Regulamin
-                </a>
-                <CreditsDialog />
-
-              </div>
-
-
             </div>
           </div>
 

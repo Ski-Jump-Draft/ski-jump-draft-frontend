@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { WeeklyTopJumpDto } from "@/types/weeklyTopJumps"
-import Image from "next/image"
 import { useJumperData } from "@/hooks/useJumperData"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -68,11 +67,11 @@ export function WeeklyTopJumpsDialog({
                                 >
                                     <div className="relative w-16 h-16">
                                         {jumper?.photoUrl ? (
-                                            <Image
+                                            <img
                                                 src={jumper.photoUrl}
                                                 alt={jumper?.name || "Jumper"}
                                                 className="rounded-full object-cover"
-                                                fill
+                                            // fill
                                             />
                                         ) : (
                                             <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -81,7 +80,7 @@ export function WeeklyTopJumpsDialog({
 
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center space-x-2">
-                                            <Image
+                                            <img
                                                 src={`/flags/${flagCode}.svg`}
                                                 alt={jumper?.nationality || ""}
                                                 width={24}
