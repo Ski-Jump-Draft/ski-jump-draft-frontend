@@ -102,20 +102,21 @@ export function WeeklyTopJumps() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center space-x-1">
                                                 <Image
-                                                    src={`/flags/${flagCode}.svg`}
-                                                    alt={jumper?.nationality || ""}
+                                                    src={`/flags/${jump.jumperCountryCode?.toLowerCase() || "xx"}.svg`}
+                                                    alt={jump.jumperCountryCode || ""}
                                                     width={14}
                                                     height={10}
                                                     className="rounded"
                                                 />
                                                 <p className="text-xs font-medium truncate text-slate-300">
-                                                    {jumper?.name ?? "Unknown"}
+                                                    {jump.name} {jump.surname}
                                                 </p>
                                             </div>
                                             <p className="text-xs text-slate-500">
-                                                {fmtDate(jump.gameCreatedAt)}
+                                                {jump.hillLocation} ({jump.hillCountryCode}) • {fmtDate(jump.gameCreatedAt)}
                                             </p>
                                         </div>
+
 
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-xs font-semibold text-slate-200">

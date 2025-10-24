@@ -10,7 +10,7 @@ export interface WeeklyTopJumpDto {
     gameWorldJumperId: string;
     name: string;
     surname: string;
-    countryCode: string;
+    jumperCountryCode: string;
     distance: number;
     windAverage: number;
     gate: number;
