@@ -57,96 +57,71 @@ export function WeeklyTopJumps() {
 
     const top5Jumps = jumps.slice(0, 5);
 
-    if (isLoading || error || jumps.length < 20) return null;
-
     return (
         <Card className="bg-slate-900/40 border-slate-800/60 shadow-none text-slate-300 text-xs backdrop-blur-md">
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 py-3">
-                    <CardTitle className="text-sm font-medium text-slate-400">Najdalsze skoki ostatnich 7 dni</CardTitle>
+                    <CardTitle className="text-sm font-medium text-slate-400">
+                        Najdalsze skoki ostatnich 7 dni
+                    </CardTitle>
                     <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            {isOpen ? (
-                                <ChevronUp className="h-3 w-3" />
-                            ) : (
-                                <ChevronDown className="h-3 w-3" />
-                            )}
-                            <span className="sr-only">
-                                Przełącz widoczność najdalszych skoków
-                            </span>
+                            {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                         </Button>
                     </CollapsibleTrigger>
                 </CardHeader>
+
                 <CollapsibleContent>
                     <CardContent className="px-4 py-3">
-                        <div className="space-y-2">
-                            {top5Jumps.map((jump, index) => {
-                                const jumper = getJumperById(jump.gameWorldJumperId);
-                                const flagCode = jumper?.nationality?.toLowerCase() || "xx";
-
-                                return (
-                                    <div
-                                        key={`${jump.gameId}-${jump.gameWorldJumperId}`}
-                                        className={cn("flex items-center space-x-2 p-2 rounded-md text-xs hover:bg-slate-800/30")}
-                                    >
-                                        {/* Zdjęcie */}
-                                        <div className="relative w-8 h-8 flex-shrink-0 rounded-full overflow-hidden border border-slate-700/40">
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-20 text-slate-500 text-xs italic">
+                                Ładowanie danych…
+                            </div>
+                        ) : error ? (
+                            <div className="text-center text-slate-500 text-xs italic">
+                                Nie udało się załadować danych.
+                            </div>
+                        ) : jumps.length < 5 ? (
+                            <div className="flex justify-center items-center h-20 text-slate-500 text-xs italic">
+                                Brak danych o najdalszych skokach.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {top5Jumps.map((jump) => {
+                                    const jumper = getJumperById(jump.gameWorldJumperId);
+                                    return (
+                                        <div
+                                            key={`${jump.gameId}-${jump.gameWorldJumperId}`}
+                                            className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-800/30"
+                                        >
                                             <img
                                                 src={getJumperPhoto(jump.name, jump.surname)}
-                                                alt={`${jump.name} ${jump.surname}`}
-                                                className="w-8 h-8 rounded-full object-cover"
+                                                alt=""
+                                                className="w-8 h-8 rounded-full border border-slate-700/40"
                                             />
-
-                                        </div>
-
-                                        {/* Dane + flaga */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1">
-                                                <img
-                                                    src={getFlagSrc(jump.jumperCountryCode)}
-                                                    alt={jump.jumperCountryCode || ""}
-                                                    width={16}
-                                                    height={12}
-                                                    className="rounded shadow-sm"
-                                                />
-                                                <p className="text-xs font-medium truncate text-slate-300">
-                                                    &nbsp;{jump.name} {jump.surname}
-                                                </p>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1">
+                                                    <img
+                                                        src={getFlagSrc(jump.jumperCountryCode)}
+                                                        alt={jump.jumperCountryCode || ""}
+                                                        width={16}
+                                                        height={12}
+                                                        className="rounded shadow-sm"
+                                                    />
+                                                    <p className="truncate text-xs font-medium text-slate-300">
+                                                        {jump.name} {jump.surname}
+                                                    </p>
+                                                </div>
+                                                <p className="text-xs text-slate-500">{jump.hillLocation}</p>
                                             </div>
-                                            <p className="text-xs text-slate-500">
-                                                {jump.hillLocation}
-                                            </p>
-                                        </div>
-
-                                        {/* Odległość */}
-                                        <div className="text-right flex-shrink-0">
                                             <p className="text-xs font-semibold text-slate-200">
                                                 {fmt(jump.distance)}m
                                             </p>
                                         </div>
-
-                                        {/* Draft pick info */}
-                                        {jump.draftPlayerNicks?.length > 0 && (
-                                            <div className="text-xs bg-blue-900/30 border border-blue-700/30 px-1.5 py-0.5 rounded text-blue-300">
-                                                {jump.draftPlayerNicks.join(", ")}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                );
-                            })}
-
-                            {/* {jumps.length > 5 && (
-                                <WeeklyTopJumpsDialog
-                                    jumps={jumps}
-                                    trigger={
-                                        <Button variant="outline" size="sm" className="w-full mt-2 text-xs h-7 text-slate-400 border-slate-700/50 hover:bg-slate-800/30">
-                                            Pokaż wszystkie ({jumps.length})
-                                        </Button>
-                                    }
-                                />
-                            )} */}
-                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </CardContent>
                 </CollapsibleContent>
             </Collapsible>
