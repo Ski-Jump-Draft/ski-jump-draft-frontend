@@ -28,6 +28,7 @@ export function WeeklyTopJumps() {
         const fetchJumps = async () => {
             try {
                 const data = await getWeeklyTopJumps();
+                console.log(data);
                 setJumps(data);
             } catch (err) {
                 setError("Failed to load weekly top jumps");
@@ -51,16 +52,16 @@ export function WeeklyTopJumps() {
     if (isLoading || error || jumps.length < 20) return null;
 
     return (
-        <Card className="w-full">
+        <Card className="w-full bg-slate-900/20 border-slate-700/30 shadow-sm">
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle>Najdalsze skoki tygodnia</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 py-3">
+                    <CardTitle className="text-sm font-medium text-slate-400">Najdalsze skoki tygodnia</CardTitle>
                     <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                             {isOpen ? (
-                                <ChevronUp className="h-4 w-4" />
+                                <ChevronUp className="h-3 w-3" />
                             ) : (
-                                <ChevronDown className="h-4 w-4" />
+                                <ChevronDown className="h-3 w-3" />
                             )}
                             <span className="sr-only">
                                 Przełącz widoczność najdalszych skoków
@@ -69,8 +70,8 @@ export function WeeklyTopJumps() {
                     </CollapsibleTrigger>
                 </CardHeader>
                 <CollapsibleContent>
-                    <CardContent>
-                        <div className="space-y-4">
+                    <CardContent className="px-4 py-3">
+                        <div className="space-y-2">
                             {top5Jumps.map((jump, index) => {
                                 const jumper = getJumperById(jump.GameWorldJumperId);
                                 const flagCode = jumper?.nationality?.toLowerCase() || "xx";
@@ -79,13 +80,13 @@ export function WeeklyTopJumps() {
                                     <div
                                         key={`${jump.GameId}-${jump.GameWorldJumperId}`}
                                         className={cn(
-                                            "flex items-center space-x-4 p-3 rounded-lg",
+                                            "flex items-center space-x-2 p-2 rounded-md text-xs",
                                             index === 0
-                                                ? "bg-yellow-50 dark:bg-yellow-950"
-                                                : "hover:bg-gray-50 dark:hover:bg-gray-900"
+                                                ? "bg-yellow-900/20 border border-yellow-700/30"
+                                                : "hover:bg-slate-800/30"
                                         )}
                                     >
-                                        <div className="relative w-12 h-12">
+                                        <div className="relative w-8 h-8 flex-shrink-0">
                                             {jumper?.photoUrl ? (
                                                 <Image
                                                     src={jumper.photoUrl}
@@ -94,39 +95,39 @@ export function WeeklyTopJumps() {
                                                     fill
                                                 />
                                             ) : (
-                                                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+                                                <div className="w-8 h-8 rounded-full bg-slate-700" />
                                             )}
                                         </div>
 
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center space-x-2">
+                                            <div className="flex items-center space-x-1">
                                                 <Image
                                                     src={`/flags/${flagCode}.svg`}
                                                     alt={jumper?.nationality || ""}
-                                                    width={20}
-                                                    height={15}
+                                                    width={14}
+                                                    height={10}
                                                     className="rounded"
                                                 />
-                                                <p className="text-sm font-medium truncate">
+                                                <p className="text-xs font-medium truncate text-slate-300">
                                                     {jumper?.name ?? "Unknown"}
                                                 </p>
                                             </div>
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-xs text-slate-500">
                                                 {fmtDate(jump.GameCreatedAt)}
                                             </p>
                                         </div>
 
-                                        <div className="text-right">
-                                            <p className="text-sm font-semibold">
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-xs font-semibold text-slate-200">
                                                 {fmt(jump.Distance)}m
                                             </p>
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-xs text-slate-500">
                                                 K{jump.KPoint ?? "?"} HS{jump.HsPoint ?? "?"}
                                             </p>
                                         </div>
 
                                         {jump.DraftPlayerNicks?.length > 0 && (
-                                            <div className="text-xs bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+                                            <div className="text-xs bg-blue-900/30 border border-blue-700/30 px-1.5 py-0.5 rounded text-blue-300">
                                                 {jump.DraftPlayerNicks.join(", ")}
                                             </div>
                                         )}
@@ -138,7 +139,7 @@ export function WeeklyTopJumps() {
                                 <WeeklyTopJumpsDialog
                                     jumps={jumps}
                                     trigger={
-                                        <Button variant="outline" className="w-full mt-2">
+                                        <Button variant="outline" size="sm" className="w-full mt-2 text-xs h-7 text-slate-400 border-slate-700/50 hover:bg-slate-800/30">
                                             Pokaż wszystkie ({jumps.length})
                                         </Button>
                                     }

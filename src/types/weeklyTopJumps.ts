@@ -4,6 +4,8 @@ export interface WeeklyTopJumpDto {
     HillId: string;
     KPoint: number;
     HsPoint: number;
+    HillLocation: string;
+    HillCountryCode: string;
     CompetitionJumperId: string;
     GameWorldJumperId: string;
     Name: string;
