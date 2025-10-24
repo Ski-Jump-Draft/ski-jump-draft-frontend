@@ -32,6 +32,7 @@ import { MainCompetitionScreen } from "@/components/main-competition/MainCompeti
 import { MainCompetitionDemo } from "@/components/main-competition/MainCompetitionDemo";
 import { CreditsDialog } from "@/components/credits/CreditsDialog";
 import { WeeklyTopJumps } from "@/components/WeeklyTopJumps";
+import { TutorialDialog } from "@/components/TutorialDialog";
 
 /* ───────────────────────────────────────────── */
 
@@ -103,20 +104,7 @@ export default function HomePage() {
     opacity: 0.7 + Math.random() * 0.3,
   })));
 
-  // Helper: support backend ranking serialized as { Position, Points }
-  const readRankingTuple = (value: unknown): [number, number] => {
-    if (Array.isArray(value)) {
-      return [Number(value[0] ?? 0), Number(value[1] ?? 0)];
-    }
-    if (value && typeof value === 'object') {
-      const v = value as Record<string, unknown>;
-      // Backend sends { position: number, points: number } (lowercase)
-      const pos = Number(v.position ?? v.Position ?? 0);
-      const pts = Number(v.points ?? v.Points ?? 0);
-      return [pos, pts];
-    }
-    return [0, 0];
-  };
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Persist my draft picks when draft data is available
   useEffect(() => {
@@ -646,7 +634,18 @@ export default function HomePage() {
             </aside>
 
             {/* Right column: main card */}
-            <div className="flex-1 order-1 md:order-2">
+            <div className="flex-1 order-1 md:order-2 relative">
+              {/* Help button – obok prawego górnego rogu carda */}
+              <button
+                onClick={() => setHelpOpen(true)}
+                className="absolute -top-0 -right-10 w-9 h-9 flex items-center justify-center 
+               rounded-full bg-gradient-to-br from-blue-600 to-purple-600 
+               text-white text-base font-bold shadow-lg shadow-blue-500/30 
+               hover:scale-110 transition-all duration-300"
+              >
+                ?
+              </button>
+
               <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-700/50 p-8 shadow-2xl">
                 <div className="space-y-6">
                   {/* Game entry form */}
@@ -904,6 +903,8 @@ export default function HomePage() {
           </div>
         ) : null
       )}
+
+      <TutorialDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </main>
   );
 }
