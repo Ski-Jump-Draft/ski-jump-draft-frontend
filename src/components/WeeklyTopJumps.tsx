@@ -23,6 +23,23 @@ const getFlagSrc = (fisCode?: string) => {
 
 export function WeeklyTopJumps() {
     const [jumps, setJumps] = useState<WeeklyTopJumpDto[]>([]);
+
+    useEffect(() => {
+        const fetchJumps = async () => {
+            try {
+                const data = await getWeeklyTopJumps();
+                setJumps(Array.isArray(data) ? data : []); // <— ważne
+            } catch (err) {
+                console.error(err);
+                setError("Failed to load weekly top jumps");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchJumps();
+    }, []);
+
+
     const [isOpen, setIsOpen] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -31,29 +48,8 @@ export function WeeklyTopJumps() {
     const getJumperPhoto = (name?: string, surname?: string) =>
         name ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name + surname)}` : "";
 
-
-    useEffect(() => {
-        const fetchJumps = async () => {
-            try {
-                const data = await getWeeklyTopJumps();
-                console.log(data);
-                setJumps(data);
-            } catch (err) {
-                setError("Failed to load weekly top jumps");
-                console.error(err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchJumps();
-    }, []);
-
     const fmt = (v?: number) =>
         typeof v === "number" && !isNaN(v) ? v.toFixed(1) : "—";
-
-    const fmtDate = (d?: string) =>
-        d && !isNaN(Date.parse(d)) ? format(new Date(d), "MMM d, yyyy") : "—";
 
     const top5Jumps = jumps.slice(0, 5);
 
@@ -92,32 +88,49 @@ export function WeeklyTopJumps() {
                                     return (
                                         <div
                                             key={`${jump.gameId}-${jump.gameWorldJumperId}`}
-                                            className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-800/30"
+                                            className="flex items-center justify-between space-x-2 p-2 rounded-md hover:bg-slate-800/30"
                                         >
-                                            <img
-                                                src={getJumperPhoto(jump.name, jump.surname)}
-                                                alt=""
-                                                className="w-8 h-8 rounded-full border border-slate-700/40"
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-1">
-                                                    <img
-                                                        src={getFlagSrc(jump.jumperCountryCode)}
-                                                        alt={jump.jumperCountryCode || ""}
-                                                        width={16}
-                                                        height={12}
-                                                        className="rounded shadow-sm"
-                                                    />
-                                                    <p className="truncate text-xs font-medium text-slate-300">
-                                                        {jump.name} {jump.surname}
-                                                    </p>
+                                            <div className="flex items-center space-x-2 min-w-0">
+                                                <img
+                                                    src={getJumperPhoto(jump.name, jump.surname)}
+                                                    alt=""
+                                                    className="w-8 h-8 rounded-full border border-slate-700/40"
+                                                />
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-1">
+                                                        <img
+                                                            src={getFlagSrc(jump.jumperCountryCode)}
+                                                            alt={jump.jumperCountryCode || ""}
+                                                            width={16}
+                                                            height={12}
+                                                            className="rounded shadow-sm"
+                                                        />
+                                                        <p className="truncate text-xs font-medium text-slate-300">
+                                                            {jump.name} {jump.surname}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500">{jump.hillLocation}</p>
                                                 </div>
-                                                <p className="text-xs text-slate-500">{jump.hillLocation}</p>
                                             </div>
-                                            <p className="text-xs font-semibold text-slate-200">
-                                                {fmt(jump.distance)}m
-                                            </p>
+
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-semibold text-slate-200">
+                                                    {fmt(jump.distance)}m
+                                                </p>
+
+                                                {Array.isArray(jump.draftPlayerNicks) &&
+                                                    jump.draftPlayerNicks.length === 1 && (
+                                                        <span
+                                                            className="px-2 py-0.5 text-[10px] font-medium rounded-full
+          bg-slate-700/40 text-slate-300 border border-slate-600/50 
+          whitespace-nowrap"
+                                                        >
+                                                            {jump.draftPlayerNicks[0]}
+                                                        </span>
+                                                    )}
+                                            </div>
                                         </div>
+
                                     );
                                 })}
                             </div>
