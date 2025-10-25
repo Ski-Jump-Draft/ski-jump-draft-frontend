@@ -37,7 +37,7 @@ export function useMatchmakingState(
         }
 
         const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5150').replace(/\/$/, '');
-        const url = `${base}/matchmaking/${matchId}/stream?playerId=${encodeURIComponent(playerId)}&auth=${encodeURIComponent(authToken)}`;
+        const url = `${base}/matchmaking/${matchId}/stream?playerId=${encodeURIComponent(playerId)}&sig=${encodeURIComponent(authToken)}`;
         const es = new EventSource(url, { withCredentials: true });
 
         const handle = (e: MessageEvent) => {
