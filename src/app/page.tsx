@@ -466,6 +466,7 @@ export default function HomePage() {
       setMatchmakingId(info.matchmakingId);
       setPlayerId(info.playerId);
       setPlayerNick(info.correctedNick);
+      setAuthToken(info.authToken);
 
       const snapshot = await getMatchmaking(info.matchmakingId);
       setCurrent(snapshot.playersCount);
