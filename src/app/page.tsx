@@ -180,7 +180,7 @@ export default function HomePage() {
     }
   }, [gameData?.nextStatus]);
 
-  useMatchmakingState(matchmakingId, s => {
+  useMatchmakingState(matchmakingId, playerId, s => {
     setCurrent(s.playersCount);
     setMax(s.maxPlayers);
     setMinPlayers(s.minPlayers);

@@ -24,6 +24,7 @@ export interface MatchmakingStateHandlers {
 
 export function useMatchmakingState(
     matchId: string | null,
+    playerId: string | null,
     onState: (s: MatchmakingState) => void,
     handlers?: MatchmakingStateHandlers,
 ) {
@@ -34,7 +35,9 @@ export function useMatchmakingState(
             return;
         }
         const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5150').replace(/\/$/, '');
-        const es = new EventSource(`${base}/matchmaking/${matchId}/stream`);
+        const es = new EventSource(
+            `${base}/matchmaking/${matchId}/stream${playerId ? `?playerId=${encodeURIComponent(playerId)}` : ''}`
+        );
 
         const handle = (e: MessageEvent) => {
             const d = JSON.parse(e.data ?? '{}');
@@ -43,7 +46,7 @@ export function useMatchmakingState(
             const playersArr: MatchmakingPlayerDto[] | undefined = d.Players?.map((p: any) => ({
                 playerId: String(p.PlayerId ?? p.playerId ?? ''),
                 nick: String(p.Nick ?? p.nick ?? ''),
-                isBot: Boolean(p.IsBot ?? p.isBot ?? p.IsBot === 'true' ?? p.isBot === 'true' ?? false),
+                isBot: ['true', true].includes(p.IsBot ?? p.isBot),
                 joinedAt: String(p.JoinedAt ?? p.joinedAt ?? new Date().toISOString())
             }));
 
