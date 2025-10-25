@@ -6,6 +6,7 @@ export interface JoinResponse {
     matchmakingId: string;
     correctedNick: string;
     playerId: string;
+    authToken: string;
 }
 
 export interface MatchmakingSnapshot {
@@ -73,6 +74,7 @@ export async function joinMatchmaking(nick: string): Promise<JoinResponse> {
         matchmakingId: d.matchmakingId,
         correctedNick: d.correctedNick,
         playerId: d.playerId,
+        authToken: d.authToken,
     };
 }
 
@@ -105,14 +107,24 @@ export async function joinPremiumMatchmaking(nick: string, password: string): Pr
         matchmakingId: d.matchmakingId,
         correctedNick: d.correctedNick,
         playerId: d.playerId,
+        authToken: d.authToken
     };
 }
 
-export async function leaveMatchmaking(gameId: string, participantId: string): Promise<void> {
-    const url = `${API}/matchmaking/leave?matchmakingId=${encodeURIComponent(gameId)}&playerId=${encodeURIComponent(participantId)}`;
-    const res = await fetch(url, { method: 'DELETE' });
+export async function leaveMatchmaking(
+    matchmakingId: string,
+    playerId: string,
+    authToken?: string
+): Promise<void> {
+    const url = `${API}/matchmaking/leave?matchmakingId=${encodeURIComponent(matchmakingId)}&playerId=${encodeURIComponent(playerId)}`;
+    const res = await fetch(url, {
+        method: 'DELETE',
+        headers: authToken ? { 'X-Player-Auth': authToken } : {},
+        credentials: 'include'
+    });
     if (!res.ok) throw new Error(`leave failed: ${res.statusText}`);
 }
+
 
 // ───────── Game API ─────────
 export async function leaveGame(gameId: string, playerId: string): Promise<{ hasLeft: boolean }> {
@@ -127,16 +139,21 @@ export async function leaveGame(gameId: string, playerId: string): Promise<{ has
     return res.json();
 }
 
-export async function pickJumper(gameId: string, playerId: string, jumperId: string): Promise<void> {
+export async function pickJumper(
+    gameId: string,
+    playerId: string,
+    jumperId: string,
+    authToken?: string
+): Promise<void> {
     const url = `${API}/game/${encodeURIComponent(gameId)}/pick?playerId=${encodeURIComponent(playerId)}&jumperId=${encodeURIComponent(jumperId)}`;
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: authToken ? { 'X-Player-Auth': authToken } : {},
+        credentials: 'include'
+    });
     if (!res.ok) {
-        if (res.status === 409) {
-            throw new Error('JUMPER_TAKEN');
-        }
-        if (res.status === 403) {
-            throw new Error('NOT_YOUR_TURN');
-        }
+        if (res.status === 409) throw new Error('JUMPER_TAKEN');
+        if (res.status === 403) throw new Error('NOT_YOUR_TURN');
         throw new Error(`pick jumper failed: ${res.statusText}`);
     }
 }

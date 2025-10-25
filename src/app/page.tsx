@@ -9,21 +9,16 @@ import { MatchmakingDialog } from "@/components/MatchmakingDialog";
 import { PrivateRoomDialog } from "@/components/PrivateRoomDialog";
 import { useMatchmakingState } from "@/hooks/api_streams/useMatchmakingState";
 import { TransitionScreen } from "@/components/TransitionScreen";
-import { GameHillInfoScreen } from "@/components/GameHillInfoScreen";
 import { PreDraftDemo } from "@/components/PreDraftDemo";
 import { PreDraftScreen } from "@/components/PreDraftScreen";
 import { DraftScreen } from "@/components/draft/DraftScreen";
 import { DraftDemo } from "@/components/draft/DraftDemo";
-import { DraftBreakDemo } from "@/components/draft/DraftBreakDemo";
 import { mapGameDataToPreDraftProps } from "@/lib/gameMapper";
-import { fisToAlpha2 } from "@/utils/countryCodes";
 import {
-  GameUpdatedEvent,
-  GameEndedEvent,
   useGameHubStream,
   GameHubEvent,
 } from "@/hooks/api_streams/useGameHubStream";
-// import { useMatchmakingSignalR, GameStartedAfterMatchmakingEvent, MatchmakingSignalREvent } from "@/hooks/api_streams/useMatchmakingSignalR";
+
 import { GameUpdatedDto, GameStatus } from "@/types/game";
 import { Toaster, toast } from 'sonner';
 import { GameEndedDemo } from "@/components/GameEndedDemo";
@@ -38,7 +33,7 @@ import { TutorialDialog } from "@/components/TutorialDialog";
 
 export default function HomePage() {
   const abortedByUserRef = useRef(false);
-  /* nickname */
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [nick, setNick] = useState("");
   const [placeholder, setPlaceholder] = useState("");
   useEffect(() => setPlaceholder(generateNickname()), []);
@@ -220,7 +215,7 @@ export default function HomePage() {
         setRecentLeaves(prev => prev.filter(player => player.playerId !== p.playerId));
       }, 3000);
     }
-  });
+  }, playerId, authToken);
 
   /* ── 2. matchmaking SignalR ── */
   // Now handled by useGameHubStream with matchmakingId
@@ -359,6 +354,8 @@ export default function HomePage() {
       }
     },
     matchmakingId,
+    playerId,
+    authToken,
     () => {
       // Connection lost handler
       if (abortedByUserRef.current) {
@@ -397,6 +394,7 @@ export default function HomePage() {
       setMatchmakingId(info.matchmakingId);
       setPlayerId(info.playerId);
       setPlayerNick(info.correctedNick);
+      setAuthToken(info.authToken);
       // setShouldConnectToGameHub(true); // REMOVED - connection will start because matchmakingId is set
 
       const snapshot = await getMatchmaking(info.matchmakingId);
@@ -523,7 +521,7 @@ export default function HomePage() {
   /* ── 5. PRZERWIJ ── */
   const abort = useCallback(async () => {
     if (matchmakingId && playerId) {
-      try { await leaveMatchmaking(matchmakingId, playerId); } catch { }
+      try { await leaveMatchmaking(matchmakingId, playerId, authToken ?? undefined); } catch { }
     }
     abortedByUserRef.current = true;
     hardReset();

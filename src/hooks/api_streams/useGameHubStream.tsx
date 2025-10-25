@@ -28,6 +28,8 @@ export function useGameHubStream(
     gameId: string | null,
     onEvent: (ev: GameHubEvent) => void,
     matchmakingId?: string | null,
+    playerId?: string | null,
+    authToken?: string | null,
     onDisconnected?: () => void,
 ): void {
     // trzyma stale aktualną referencję do onEvent (nie wywoła useEffect przy każdej zmianie funkcji!)
@@ -119,7 +121,7 @@ export function useGameHubStream(
                 console.log('SignalR connection started.');
 
                 if (isMatchmaking) {
-                    await connection.invoke('JoinMatchmaking', matchmakingId);
+                    await connection.invoke('JoinMatchmaking', matchmakingId, playerId, authToken);
                 } else {
                     await connection.invoke('JoinGame', gameId);
                 }
@@ -133,7 +135,7 @@ export function useGameHubStream(
                         if (connection.state === 'Disconnected') {
                             await connection.start();
                             if (isMatchmaking) {
-                                await connection.invoke('JoinMatchmaking', matchmakingId);
+                                await connection.invoke('JoinMatchmaking', matchmakingId, playerId, authToken);
                             } else {
                                 await connection.invoke('JoinGame', gameId);
                             }

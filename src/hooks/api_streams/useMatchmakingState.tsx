@@ -26,15 +26,19 @@ export function useMatchmakingState(
     matchId: string | null,
     onState: (s: MatchmakingState) => void,
     handlers?: MatchmakingStateHandlers,
+    playerId?: string | null,
+    authToken?: string | null,
 ) {
     const prevPlayersRef = useRef<string[]>([]);
     useEffect(() => {
-        if (!matchId) {
-            prevPlayersRef.current = []; // Reset players when matchmakingId is null
+        if (!matchId || !playerId || !authToken) {
+            prevPlayersRef.current = [];
             return;
         }
+
         const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5150').replace(/\/$/, '');
-        const es = new EventSource(`${base}/matchmaking/${matchId}/stream`);
+        const url = `${base}/matchmaking/${matchId}/stream?playerId=${encodeURIComponent(playerId)}&auth=${encodeURIComponent(authToken)}`;
+        const es = new EventSource(url, { withCredentials: true });
 
         const handle = (e: MessageEvent) => {
             const d = JSON.parse(e.data ?? '{}');
