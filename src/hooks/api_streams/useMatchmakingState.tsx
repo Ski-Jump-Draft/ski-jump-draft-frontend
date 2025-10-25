@@ -47,7 +47,7 @@ export function useMatchmakingState(
             const playersArr: MatchmakingPlayerDto[] | undefined = d.Players?.map((p: any) => ({
                 playerId: String(p.PlayerId ?? p.playerId ?? ''),
                 nick: String(p.Nick ?? p.nick ?? ''),
-                isBot: Boolean(p.IsBot ?? p.isBot ?? p.IsBot === 'true' ?? p.isBot === 'true' ?? false),
+                isBot: p.IsBot === true || p.isBot === true || p.IsBot === 'true' || p.isBot === 'true',
                 joinedAt: String(p.JoinedAt ?? p.joinedAt ?? new Date().toISOString())
             }));
 
