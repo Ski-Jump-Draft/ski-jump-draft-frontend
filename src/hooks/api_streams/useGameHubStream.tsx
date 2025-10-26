@@ -24,13 +24,22 @@ export type GameHubEvent =
     | GameEndedEvent
     | GameStartedAfterMatchmakingEvent;
 
+export interface GameHubStreamConfig {
+    // Game-specific properties
+    gameId?: string | null;
+    gamePlayerId?: string | null;
+    gameToken?: string | null;
+    // Matchmaking-specific properties
+    matchmakingId?: string | null;
+    matchmakingPlayerId?: string | null;
+    matchmakingToken?: string | null;
+    // Common properties
+    onDisconnected?: () => void;
+}
+
 export function useGameHubStream(
-    gameId: string | null,
     onEvent: (ev: GameHubEvent) => void,
-    matchmakingId?: string | null,
-    playerId?: string | null,
-    authToken?: string | null,
-    onDisconnected?: () => void,
+    config: GameHubStreamConfig
 ): void {
     // trzyma stale aktualną referencję do onEvent (nie wywoła useEffect przy każdej zmianie funkcji!)
     const onEventRef = useRef(onEvent);
@@ -41,7 +50,7 @@ export function useGameHubStream(
     const connectionRef = useRef<HubConnection | null>(null);
 
     useEffect(() => {
-        if (!gameId && !matchmakingId) {
+        if (!config.gameId && !config.matchmakingId) {
             console.log("useGameHubStream: No IDs provided, skipping connection.");
             // Stop any existing connection if IDs are cleared
             if (connectionRef.current) {
@@ -52,9 +61,16 @@ export function useGameHubStream(
             return;
         }
 
-        const targetId = gameId || matchmakingId;
-        const isMatchmaking = !gameId && !!matchmakingId;
-        console.log('useGameHubStream: Starting connection', { gameId, matchmakingId, isMatchmaking, targetId });
+        const isMatchmaking = !config.gameId && !!config.matchmakingId;
+        const targetId = config.gameId || config.matchmakingId;
+        console.log('useGameHubStream: Starting connection', {
+            gameId: config.gameId,
+            matchmakingId: config.matchmakingId,
+            gamePlayerId: config.gamePlayerId,
+            matchmakingPlayerId: config.matchmakingPlayerId,
+            isMatchmaking,
+            targetId
+        });
 
         const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || 'http://localhost:5150';
         const connection = new HubConnectionBuilder()
@@ -93,8 +109,12 @@ export function useGameHubStream(
                 if (isMatchmaking) {
                     connection.off('GameStartedAfterMatchmaking');
                     connection.on('GameStartedAfterMatchmaking', async (data: any) => {
+                        const { gameId, playersMapping } = data;
                         try {
-                            await connection.invoke('JoinGame', data.gameId);
+                            // When a game starts from matchmaking, we need to find our game playerId from the mapping
+                            const gamePlayerId = playersMapping[config.matchmakingPlayerId!];
+                            // Use the same matchmaking token for the game - backend supports this
+                            await connection.invoke('JoinGame', gameId, gamePlayerId, config.matchmakingToken);
                         } catch (err) {
                             console.error('Failed to switch to game group:', err);
                         }
@@ -120,24 +140,25 @@ export function useGameHubStream(
                 await connection.start();
                 console.log('SignalR connection started.');
 
-                if (isMatchmaking) {
-                    await connection.invoke('JoinMatchmaking', matchmakingId, playerId, authToken);
-                } else {
-                    await connection.invoke('JoinGame', gameId);
+                if (isMatchmaking && config.matchmakingId && config.matchmakingPlayerId && config.matchmakingToken) {
+                    await connection.invoke('JoinMatchmaking', config.matchmakingId, config.matchmakingPlayerId, config.matchmakingToken);
+                } else if (config.gameId && config.gamePlayerId && (config.gameToken || config.matchmakingToken)) {
+                    // Try game token first, fall back to matchmaking token if provided
+                    await connection.invoke('JoinGame', config.gameId, config.gamePlayerId, config.gameToken || config.matchmakingToken);
                 }
 
                 connection.onclose(async (error) => {
                     console.error('SignalR connection closed after retries:', error);
-                    if (onDisconnected) onDisconnected();
+                    if (config.onDisconnected) config.onDisconnected();
                     // Last resort: try to fully restart after a short delay (this will re-Join group)
                     try {
                         await new Promise(r => setTimeout(r, 1500));
                         if (connection.state === 'Disconnected') {
                             await connection.start();
-                            if (isMatchmaking) {
-                                await connection.invoke('JoinMatchmaking', matchmakingId, playerId, authToken);
-                            } else {
-                                await connection.invoke('JoinGame', gameId);
+                            if (isMatchmaking && config.matchmakingId && config.matchmakingPlayerId && config.matchmakingToken) {
+                                await connection.invoke('JoinMatchmaking', config.matchmakingId, config.matchmakingPlayerId, config.matchmakingToken);
+                            } else if (config.gameId && config.gamePlayerId && (config.gameToken || config.matchmakingToken)) {
+                                await connection.invoke('JoinGame', config.gameId, config.gamePlayerId, config.gameToken || config.matchmakingToken);
                             }
                             console.info('SignalR hard-restarted after close.');
                         }
@@ -148,8 +169,8 @@ export function useGameHubStream(
 
             } catch (err) {
                 console.error('SignalR connection error:', err);
-                if (onDisconnected) {
-                    onDisconnected();
+                if (config.onDisconnected) {
+                    config.onDisconnected();
                 }
             }
         };
@@ -161,5 +182,12 @@ export function useGameHubStream(
             connection.stop();
             connectionRef.current = null;
         };
-    }, [gameId, matchmakingId]);
+    }, [
+        config.gameId,
+        config.gamePlayerId,
+        config.gameToken,
+        config.matchmakingId,
+        config.matchmakingPlayerId,
+        config.matchmakingToken
+    ]);
 }

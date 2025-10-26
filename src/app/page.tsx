@@ -224,7 +224,6 @@ export default function HomePage() {
 
   /* ── 3. gameHub ── */
   useGameHubStream(
-    null,  // Force single-connection mode: use matchmakingId only and switch groups internally
     (ev: GameHubEvent) => {
       switch (ev.type) {
         case "gameUpdated":
@@ -353,27 +352,34 @@ export default function HomePage() {
           break;
       }
     },
-    matchmakingId,
-    playerId,
-    authToken,
-    () => {
-      // Connection lost handler
-      if (abortedByUserRef.current) {
-        // Suppress toast when user intentionally cancelled matchmaking
-        abortedByUserRef.current = false;
-        return;
-      }
-      console.log('Connection lost - returning to main menu');
-      toast.error("Utracono połączenie z serwerem.", {
-        style: {
-          backgroundColor: '#440000', // Darker red background
-          color: '#ffcccc',       // Lighter red text
-          borderColor: '#ff0000',  // Red border
-          maxWidth: '400px',      // Limit width
-        },
-        duration: 5000, // Make it visible for a longer time
-      });
-      hardReset(); // This will clear matchmakingId and stop the connection
+    {
+      // Provide both matchmaking and game credentials - the hook will use the appropriate ones
+      matchmakingId,
+      matchmakingPlayerId: playerId,
+      matchmakingToken: authToken,
+      // These will be populated by the hook when transitioning from matchmaking to game
+      gameId: null,
+      gamePlayerId: playerId,
+      gameToken: null,
+      onDisconnected: () => {
+        // Connection lost handler
+        if (abortedByUserRef.current) {
+          // Suppress toast when user intentionally cancelled matchmaking
+          abortedByUserRef.current = false;
+          return;
+        }
+        console.log('Connection lost - returning to main menu');
+        toast.error("Utracono połączenie z serwerem.", {
+          style: {
+            backgroundColor: '#440000', // Darker red background
+            color: '#ffcccc',       // Lighter red text
+            borderColor: '#ff0000',  // Red border
+            maxWidth: '400px',      // Limit width
+          },
+          duration: 5000, // Make it visible for a longer time
+        });
+        hardReset(); // This will clear matchmakingId and stop the connection
+      },
     }
   );
 
